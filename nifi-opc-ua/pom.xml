@@ -26,13 +26,11 @@
     </parent>
     <properties>
         <jdk.version>1.8</jdk.version>
-        <opc-ua-stack.version>1.03.341.0-SNAPSHOT</opc-ua-stack.version>
+        <opc-ua-stack.version>1.03.340.0-SNAPSHOT</opc-ua-stack.version>
     </properties>
 
     <modules>
         <module>opc-deploy-local</module>
         <module>nifi-opcua-bundle</module>
     </modules>
-
-
 </project>

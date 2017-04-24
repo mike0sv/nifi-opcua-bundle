@@ -25,13 +25,6 @@
     <groupId>com.kentender.nifi</groupId>
     <artifactId>opc-deploy-local</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-
-    <properties>
-        <jdk.version>1.8</jdk.version>
-        <opc-ua-stack.version>1.03.341.0-SNAPSHOT</opc-ua-stack.version>
-    </properties>
-
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
@@ -54,32 +47,25 @@
                         <target>${jdk.version}</target>
                     </configuration>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <version>1.7</version>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.5.1</version>
+                    <configuration>
+                        <groupId>org.opcfoundation.ua</groupId>
+                        <artifactId>opc-ua-stack</artifactId>
+                        <version>${opc-ua-stack.version}</version>
+                        <packaging>jar</packaging>
+                        <file>${project.basedir}/src/main/resources/opc-ua-stack-${opc-ua-stack.version}.jar</file>
+                        <generatePom>true</generatePom>
+                    </configuration>
                     <executions>
                         <execution>
-                            <id>copy-opc-ua-stack-jar-to-local-repo</id>
-                            <phase>validate</phase>
+                            <id>install-jar-lib</id>
                             <goals>
-                                <goal>run</goal>
+                                <goal>install-file</goal>
                             </goals>
-                            <configuration>
-                                <target>
-                                    <exec
-                                            dir="${project.basedir}"
-                                            executable="mvn"
-                                            failonerror="true">
-                                        <arg line="install:install-file -Dfile=${project.basedir}/src/main/resources/opc-ua-stack-${opc-ua-stack.version}.jar
-		                  		-DgroupId=org.opcfoundation.ua
-		    					-DartifactId=opc-ua-stack
-		    					-Dversion=${opc-ua-stack.version}
-		    					-Dpackaging=jar" />
-                                    </exec>
-                                </target>
-                            </configuration>
+                            <phase>validate</phase>
                         </execution>
                     </executions>
                 </plugin>
