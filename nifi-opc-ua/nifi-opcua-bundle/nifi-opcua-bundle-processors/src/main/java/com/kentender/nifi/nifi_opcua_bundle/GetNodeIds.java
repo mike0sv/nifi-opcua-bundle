@@ -51,8 +51,8 @@ public class GetNodeIds extends AbstractProcessor {
 			  .build();
     
     public static final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
-            .Builder().name("Starting Node")
-            .description("From what node should Nifi begin browsing the node tree. Default is the root node.")
+            .Builder().name("Starting Nodes")
+            .description("From what node should Nifi begin browsing the node tree. Default is the root node. Seperate multiple nodes with a comma (,)")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
     
@@ -130,7 +130,7 @@ public class GetNodeIds extends AbstractProcessor {
 		 // Submit to getValue
         final OPCUAService opcUAService = context.getProperty(OPCUA_SERVICE)
         		.asControllerService(OPCUAService.class);
-        
+
         if(opcUAService.updateSession()){
         	logger.debug("Session current");
         }else {
@@ -140,11 +140,20 @@ public class GetNodeIds extends AbstractProcessor {
 		// Set the starting node and parse the node tree
 		if ( starting_node == null) {
 			logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, new ExpandedNodeId(Identifiers.RootFolder)));
+			List<ExpandedNodeId> ids = new ArrayList<>();
+			ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
 			
 		} else {
 			logger.debug("Parse the result list for node " + new ExpandedNodeId(NodeId.parseNodeId(starting_node)));
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, new ExpandedNodeId(NodeId.parseNodeId(starting_node))));
+            List<ExpandedNodeId> ids = new ArrayList<>();
+
+            String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
+
+            for(String split : splits) {
+                ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
+            }
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
 		}
 		
 		// Write the results back out to a flow file

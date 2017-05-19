@@ -131,7 +131,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     public void onEnabled(final ConfigurationContext context) throws InitializationException {
     	
     	final ComponentLog logger = getLogger();
-    	
+    	logger.info("Creating variables");
     	EndpointDescription[] endpointDescriptions = null;   
     	KeyPair myClientApplicationInstanceCertificate = null;
     	KeyPair myHttpsCertificate = null;
@@ -143,6 +143,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     	
 		if (context.getProperty(SECURITY_POLICY).getValue() == "None"){
 			// Build OPC Client
+			logger.info("No Security Policy requested");
 			myClientApplicationInstanceCertificate = null;
 						
 		} else {
@@ -151,7 +152,6 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			
 			// Load or create HTTP and Client's Application Instance Certificate and key
 			switch (context.getProperty(SECURITY_POLICY).getValue()) {
-				
 				case "Basic128Rsa15":{
 					myClientApplicationInstanceCertificate = Utils.getCert(context.getProperty(APPLICATION_NAME).getValue(), SecurityPolicy.BASIC128RSA15);
 					break;
@@ -167,7 +167,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			}
 		}
 
-		logger.debug("Creating Client");
+		logger.info("Creating Client");
 		
 		// Create Client
 		myClient = Client.createClientApplication( myClientApplicationInstanceCertificate ); 
@@ -183,11 +183,12 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			
 			// if a certificate is provided
 			try {
+				logger.error("Certificate Provided...getting " + context.getProperty(SERVER_CERT).getValue());
 				File myCertFile = new File(context.getProperty(SERVER_CERT).getValue());
 				myOwnCert = Cert.load(myCertFile);
 				
 			} catch (Exception e1) {
-				logger.debug("Error loading certificate " + e1.getMessage());
+				logger.error("Error loading certificate " + e1.getMessage());
 			}
 			
 			// Describe end point
@@ -211,17 +212,22 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 				}
 				default :{
 					endpointDescription.setSecurityPolicyUri(SecurityPolicy.NONE.getPolicyUri());
-					logger.error("No security mode specified");
+					logger.info("No security mode specified");
 					break;
 				}
 			}
 	
 		} else {
 			try {
+				logger.info("Discovering endpoints from" +  context.getProperty(ENDPOINT).getValue());
 				endpointDescriptions = myClient.discoverEndpoints(context.getProperty(ENDPOINT).getValue());
+				if (endpointDescriptions == null) {
+					logger.error("Endpoint descriptions not received.");
+					return;
+				}
 			} catch (ServiceResultException e1) {
 				
-				logger.error(e1.getMessage());
+				logger.error("Issue getting service endpoint descriptions: " + e1.getMessage());
 			}
 			switch (context.getProperty(SECURITY_POLICY).getValue()) {
 			
@@ -239,7 +245,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 				}
 				default :{
 					endpointDescriptions = selectBySecurityPolicy(endpointDescriptions,SecurityPolicy.NONE);
-					logger.error("No security mode specified");
+					logger.info("No security mode specified");
 					break;
 				}
 			}
@@ -366,19 +372,21 @@ public class StandardOPCUAService extends AbstractControllerService implements O
   			
   		}
   		
-        return serverResponse.getBytes(); 
+        return serverResponse.getBytes();
 	}
 
 	@Override
-	public String getNameSpace(String print_indentation, int max_recursiveDepth, ExpandedNodeId expandedNodeId) throws ProcessException {
+	public String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds) throws ProcessException {
 		
 		final ComponentLog logger = getLogger();
 		StringBuilder stringBuilder = new StringBuilder();
-		
-		// Set the starting node and parse the node tree
-		logger.debug("Parse the result list for node " + expandedNodeId.toString());
-		stringBuilder.append(parseNodeTree(print_indentation, 0, Integer.valueOf(max_recursiveDepth), expandedNodeId));		
-		
+
+		for(ExpandedNodeId expNodeId : expandedNodeIds){
+			// Set the starting node and parse the node tree
+			logger.debug("Parse the result list for node " + expNodeId.toString());
+			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
+		}
+
 		return stringBuilder.toString();
 	
 	}

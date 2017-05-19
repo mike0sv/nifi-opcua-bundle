@@ -143,21 +143,32 @@ public class GetValue extends AbstractProcessor {
         });
         
         // Submit to getValue
-        final OPCUAService opcUAService = context.getProperty(OPCUA_SERVICE)
-        		.asControllerService(OPCUAService.class);
-       
+        OPCUAService opcUAService;
+
+        try {
+            opcUAService = context.getProperty(OPCUA_SERVICE)
+                    .asControllerService(OPCUAService.class);
+        }
+        catch (Exception ex){
+            logger.error(ex.getMessage());
+            return;
+        }
+
+
         if(opcUAService.updateSession()){
         	logger.debug("Session current");
         }else {
         	logger.debug("Session update failed");
         }
-        
+
+        byte[] value = opcUAService.getValue(requestedTagname.get());
+
   		// Write the results back out to flow file
         flowFile = session.write(flowFile, new OutputStreamCallback() {
 
             @Override
             public void process(OutputStream out) throws IOException {
-            	out.write(opcUAService.getValue(requestedTagname.get()));
+            	out.write(value);
             	
             }
             
