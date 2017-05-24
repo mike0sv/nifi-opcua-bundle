@@ -163,6 +163,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 				}case "Basic256Rsa256": {
 					myClientApplicationInstanceCertificate = Utils.getCert(context.getProperty(APPLICATION_NAME).getValue(), SecurityPolicy.BASIC256SHA256);
 					break;
+				}default: {
+					myClientApplicationInstanceCertificate = null;
+					break;
 				}
 			}
 		}
@@ -323,6 +326,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
          */
         
         try {
+        	if ( mySession != null )
 			mySession.close();
 		} catch (ServiceFaultException e) {
 			// TODO Auto-generated catch block
@@ -352,26 +356,28 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			new ReadValueId(NodeId.parseNodeId(reqTagname), Attributes.Value, null, null )
 		};
         
-        // Form OPC request
-  		ReadRequest req = new ReadRequest();		
-  		req.setMaxAge(500.00);
-  		req.setTimestampsToReturn(TimestampsToReturn.Both);
-  		req.setRequestHeader(null);
-  		req.setNodesToRead(NodesToRead);
-
-  		// Submit OPC Read and handle response
-  		try{
-  			ReadResponse readResponse = mySession.Read(req);
-            DataValue[] values = readResponse.getResults();
-            // TODO need to check the result for errors and other quality issues
-            serverResponse = reqTagname + "," + values[0].getValue().toString()  + ","+ values[0].getServerTimestamp().toString();
+        if (NodesToRead != null)
+ 		 {
+        	// Form OPC request
+        	ReadRequest req = new ReadRequest();		
+        	req.setMaxAge(500.00);
+        	req.setTimestampsToReturn(TimestampsToReturn.Both);
+        	req.setRequestHeader(null);
+        	req.setNodesToRead(NodesToRead);
+	 
+  			 // Submit OPC Read and handle response
+  			 try{
+  				 ReadResponse readResponse = mySession.Read(req);
+  				 DataValue[] values = readResponse.getResults();
+  				 // TODO need to check the result for errors and other quality issues
+  				 serverResponse = reqTagname + "," + values[0].getValue().toString()  + ","+ values[0].getServerTimestamp().toString();
               
-          }catch (Exception e) {
-  			// TODO Auto-generated catch block
-  			e.printStackTrace();
+  			 }catch (Exception e) {
+  				 // TODO Auto-generated catch block
+  				 e.printStackTrace();
   			
-  		}
-  		
+  			 }
+  		 }
         return serverResponse.getBytes();
 	}
 
@@ -413,6 +419,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		
 		// There should only be one item left in the list
 		// TODO Servers with multiple nic cards have more than one left in the list
+		if(endpoints.length == 0) {
+			logger.debug("No suitable endpoint found from " + url);
+			return false;
+		}
 		return true;
 		
 	}

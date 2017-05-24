@@ -55,6 +55,8 @@ import java.util.stream.Collectors;
 
 public class GetValue extends AbstractProcessor {
 	
+	static boolean error = false;
+	  
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
 			  .description("Specifies the OPC UA Service that can be used to access data")
@@ -136,6 +138,7 @@ public class GetValue extends AbstractProcessor {
                 }catch (Exception e) {
         			// TODO Auto-generated catch block
         			e.printStackTrace();
+        			logger.error("Failed to read");
         		}
         		
             }
@@ -164,6 +167,7 @@ public class GetValue extends AbstractProcessor {
         byte[] value = opcUAService.getValue(requestedTagname.get());
 
   		// Write the results back out to flow file
+        try{
         flowFile = session.write(flowFile, new OutputStreamCallback() {
 
             @Override
@@ -175,7 +179,10 @@ public class GetValue extends AbstractProcessor {
         });
         
         session.transfer(flowFile, SUCCESS);
-        
+        } catch (ProcessException ex) {
+        	logger.error("Unable to process", ex);
+        	session.transfer(flowFile, FAILURE);
+        }
     }
     
 }
