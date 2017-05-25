@@ -161,7 +161,7 @@ public class GetNodeIds extends AbstractProcessor {
         if ( flowFile == null ) {
         	logger.error("Flowfile is null");
         }
-		
+        try{
 		flowFile = session.write(flowFile, new OutputStreamCallback() {
             public void process(OutputStream out) throws IOException {
             	out.write(stringBuilder.toString().getBytes());
@@ -171,7 +171,10 @@ public class GetNodeIds extends AbstractProcessor {
         
 		// Transfer data to flow file
         session.transfer(flowFile, SUCCESS);
-        
+        }catch (ProcessException ex) {
+        	logger.error("Unable to process", ex);
+            session.transfer(flowFile, FAILURE);
+        }
 	}
 	
 
