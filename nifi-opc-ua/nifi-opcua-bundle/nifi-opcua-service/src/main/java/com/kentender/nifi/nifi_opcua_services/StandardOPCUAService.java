@@ -286,7 +286,11 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		
 		final ComponentLog logger = getLogger();
 		double elapsedTime = System.currentTimeMillis() - timestamp;
-		
+		if (elapsedTime < 0)
+		{
+			logger.debug("not a valid timestamp");
+			return false;
+		}
 		if ((elapsedTime ) < mySession.getSession().getSessionTimeout()){
 			
 			timestamp = System.currentTimeMillis();
@@ -390,7 +394,11 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		for(ExpandedNodeId expNodeId : expandedNodeIds){
 			// Set the starting node and parse the node tree
 			logger.debug("Parse the result list for node " + expNodeId.toString());
-			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
+			//stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
+			String str = parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId);
+			if (str != null){
+				stringBuilder.append(str);
+			}
 		}
 
 		return stringBuilder.toString();
