@@ -115,8 +115,8 @@ public class GetValue extends AbstractProcessor {
     	final ComponentLog logger = getLogger();
     	
     	// Initialize  response variable
-        final AtomicReference<String> requestedTagname = new AtomicReference<>();
-        
+        //final AtomicReference<String> requestedTagname = new AtomicReference<>();
+    	final AtomicReference<List<String>> requestedTagname = new AtomicReference<>();
         
         
         // get FlowFile
@@ -130,9 +130,11 @@ public class GetValue extends AbstractProcessor {
             public void process(InputStream in) throws IOException {
             	
                 try{
-                	String tagname = new BufferedReader(new InputStreamReader(in))
-                	  .lines().collect(Collectors.joining("\n"));
-
+                	//String tagname = new BufferedReader(new InputStreamReader(in))
+                	  //.lines().collect(Collectors.joining("\n"));
+                	List<String> tagname = new BufferedReader(new InputStreamReader(in))
+                	.lines().collect(Collectors.toList());
+                	
                     requestedTagname.set(tagname);
                     
                 }catch (Exception e) {
@@ -163,8 +165,9 @@ public class GetValue extends AbstractProcessor {
         }else {
         	logger.debug("Session update failed");
         }
-
-        byte[] value = opcUAService.getValue(requestedTagname.get());
+        
+        //byte[] value = opcUAService.getValue(requestedTagname.get());
+        List<byte[]> values = opcUAService.getValue(requestedTagname.get());
 
   		// Write the results back out to flow file
         try{
@@ -172,8 +175,10 @@ public class GetValue extends AbstractProcessor {
 
             @Override
             public void process(OutputStream out) throws IOException {
-            	out.write(value);
-            	
+            	//out.write(value);
+            	for(byte[] value: values){
+            		out.write(value);
+            	}
             }
             
         });

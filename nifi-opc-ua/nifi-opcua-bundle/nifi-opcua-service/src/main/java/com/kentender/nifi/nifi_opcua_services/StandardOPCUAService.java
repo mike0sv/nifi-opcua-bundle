@@ -348,13 +348,15 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
 	@Override
-	public byte[] getValue(String reqTagname) throws ProcessException {
-
+	//public byte[] getValue(String reqTagname) throws ProcessException {
+	public List<byte[]> getValue(List<String> reqTagnames) throws ProcessException {
 		final ComponentLog logger = getLogger();
 		// TODO presently this method accepts a tag name as input and fetches a value for that tag
 		// A future version will need to be able to acquire a value from a specific time in the past 
 		
-		String serverResponse = "";
+		List<byte[]> responseList = new ArrayList<>();
+		for(String reqTagname: reqTagnames ){
+	    String serverResponse = "";
     	
         ReadValueId[] NodesToRead = { 
 			new ReadValueId(NodeId.parseNodeId(reqTagname), Attributes.Value, null, null )
@@ -382,7 +384,12 @@ public class StandardOPCUAService extends AbstractControllerService implements O
   			
   			 }
   		 }
-        return serverResponse.getBytes();
+        
+        responseList.add(serverResponse.getBytes());
+                
+		} 
+		return responseList;
+       // return serverResponse.getBytes();
 	}
 
 	@Override
@@ -394,11 +401,11 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		for(ExpandedNodeId expNodeId : expandedNodeIds){
 			// Set the starting node and parse the node tree
 			logger.debug("Parse the result list for node " + expNodeId.toString());
-			//stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
-			String str = parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId);
+			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
+			/*String str = parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId);
 			if (str != null){
 				stringBuilder.append(str);
-			}
+			}*/
 		}
 
 		return stringBuilder.toString();
