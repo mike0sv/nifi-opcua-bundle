@@ -115,8 +115,7 @@ public class GetValue extends AbstractProcessor {
     	final ComponentLog logger = getLogger();
     	
     	// Initialize  response variable
-        final AtomicReference<String> requestedTagname = new AtomicReference<>();
-        
+    	final AtomicReference<List<String>> requestedTagnames = new AtomicReference<>();
         
         
         // get FlowFile
@@ -130,10 +129,10 @@ public class GetValue extends AbstractProcessor {
             public void process(InputStream in) throws IOException {
             	
                 try{
-                	String tagname = new BufferedReader(new InputStreamReader(in))
-                	  .lines().collect(Collectors.joining("\n"));
-
-                    requestedTagname.set(tagname);
+                	List<String> tagname = new BufferedReader(new InputStreamReader(in))
+                	.lines().collect(Collectors.toList());
+                	
+                    requestedTagnames.set(tagname);
                     
                 }catch (Exception e) {
         			// TODO Auto-generated catch block
@@ -164,7 +163,7 @@ public class GetValue extends AbstractProcessor {
         	logger.debug("Session update failed");
         }
 
-        byte[] value = opcUAService.getValue(requestedTagname.get());
+        byte[] values = opcUAService.getValue(requestedTagnames.get());
 
   		// Write the results back out to flow file
         try{
@@ -172,8 +171,7 @@ public class GetValue extends AbstractProcessor {
 
             @Override
             public void process(OutputStream out) throws IOException {
-            	out.write(value);
-            	
+                out.write(values);
             }
             
         });
