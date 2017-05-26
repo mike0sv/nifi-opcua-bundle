@@ -29,7 +29,7 @@ import java.util.List;
 public interface OPCUAService extends ControllerService {
 
 	//byte[] getValue(String reqTagname) throws ProcessException;
-	List<byte[]> getValue(List<String> reqTagname) throws ProcessException;
+	byte[] getValue(List<String> reqTagname) throws ProcessException;
 	
 	String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds)
 			throws ProcessException;

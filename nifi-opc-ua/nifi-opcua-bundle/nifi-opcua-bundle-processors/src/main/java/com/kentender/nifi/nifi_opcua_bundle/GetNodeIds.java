@@ -183,15 +183,23 @@ public class GetNodeIds extends AbstractProcessor {
     			
 				case "Yes":{
 					String str = stringBuilder.toString();
-        			str = str.substring(str.indexOf('\n')+1);
-        			final String result = str;
-        			out.write(result.getBytes());
+        			String parts[] = str.split("\\r?\\n");
+        			String outString = "";
+        			for (int i = 0; i < parts.length; i++){
+        			    if (parts[i].startsWith("nsu")){
+        			        continue;
+                        }
+        			    outString = outString + parts[i] + System.getProperty("line.separator");;
+                    }
+                    outString.trim();
+                    out.write(outString.getBytes());
+                    break;
 				}
 				case "No":{
 					out.write(stringBuilder.toString().getBytes());
+					break;
 				}
 			}
-            	
             }
 		});
         

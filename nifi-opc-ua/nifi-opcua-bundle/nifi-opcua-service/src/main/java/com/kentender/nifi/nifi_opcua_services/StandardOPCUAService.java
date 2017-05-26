@@ -19,11 +19,9 @@ package com.kentender.nifi.nifi_opcua_services;
 import static org.opcfoundation.ua.utils.EndpointUtil.selectBySecurityPolicy;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
+
+import javafx.scene.control.IndexRange;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnDisabled;
@@ -272,7 +270,6 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			timestamp = System.currentTimeMillis();
 			
 		} catch (ServiceResultException e) {
-			// TODO Auto-generated catch block
 			logger.debug("Error while creating initial SessionChannel: ");
 			logger.error(e.getMessage());
 		}
@@ -321,75 +318,76 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     public void shutdown() {
     	// Close the session 
     	final ComponentLog logger = getLogger();
-        /*
-         * ( is this necessary or common practice.  
-         * Timeouts clean up abandoned sessions ??? )*
-         *  - yes, a client that is aware it will not 
-         *  communicate again should close its connection
-         * 
-         */
         
         try {
         	if ( mySession != null )
 			mySession.close();
 		} catch (ServiceFaultException e) {
-			// TODO Auto-generated catch block
 			logger.debug(e.getMessage());
 			e.printStackTrace();
 		} catch (ServiceResultException e) {
-			// TODO Auto-generated catch block
 			logger.debug(e.getMessage());
 			e.printStackTrace();
 		} catch (Exception e){
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
  
     }
 
 	@Override
-	//public byte[] getValue(String reqTagname) throws ProcessException {
-	public List<byte[]> getValue(List<String> reqTagnames) throws ProcessException {
+	public byte[] getValue(List<String> reqTagnames) throws ProcessException {
 		final ComponentLog logger = getLogger();
-		// TODO presently this method accepts a tag name as input and fetches a value for that tag
-		// A future version will need to be able to acquire a value from a specific time in the past 
-		
-		List<byte[]> responseList = new ArrayList<>();
-		for(String reqTagname: reqTagnames ){
-	    String serverResponse = "";
-    	
-        ReadValueId[] NodesToRead = { 
-			new ReadValueId(NodeId.parseNodeId(reqTagname), Attributes.Value, null, null )
-		};
-        
-        if (NodesToRead != null)
- 		 {
-        	// Form OPC request
-        	ReadRequest req = new ReadRequest();		
-        	req.setMaxAge(500.00);
-        	req.setTimestampsToReturn(TimestampsToReturn.Both);
-        	req.setRequestHeader(null);
-        	req.setNodesToRead(NodesToRead);
-	 
-  			 // Submit OPC Read and handle response
-  			 try{
-  				 ReadResponse readResponse = mySession.Read(req);
-  				 DataValue[] values = readResponse.getResults();
-  				 // TODO need to check the result for errors and other quality issues
-  				 serverResponse = reqTagname + "," + values[0].getValue().toString()  + ","+ values[0].getServerTimestamp().toString();
-              
-  			 }catch (Exception e) {
-  				 // TODO Auto-generated catch block
-  				 e.printStackTrace();
-  			
-  			 }
-  		 }
-        
-        responseList.add(serverResponse.getBytes());
-                
-		} 
-		return responseList;
-       // return serverResponse.getBytes();
+
+		//Create the nodes to read array
+		ReadValueId nodesToRead[] = new ReadValueId[reqTagnames.size()];
+
+		for (int i = 0; i < reqTagnames.size(); i++){
+            nodesToRead[i] = (new ReadValueId(NodeId.parseNodeId(reqTagnames.get(i)), Attributes.Value, null, null));
+        }
+
+		String serverResponse = "";
+
+        // Form OPC request
+        ReadRequest req = new ReadRequest();
+        req.setMaxAge(500.00);
+        req.setTimestampsToReturn(TimestampsToReturn.Both);
+        req.setRequestHeader(null);
+        req.setNodesToRead(nodesToRead);
+
+        // Submit OPC Read and handle response
+        try{
+            ReadResponse readResponse = mySession.Read(req);
+            DataValue[] values = readResponse.getResults();
+
+            // Validate response
+            if (values != null) {
+                if (values.length == 0)
+                    logger.error("OPC Server returned nothing.");
+                else {
+                    // Iterate through values
+                    for (int i = 0; i < values.length; i++) {
+                        try {
+                            // Build flowfile line
+                            serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
+                                    + values[i].getValue().toString() + ","
+                                    + values[i].getServerTimestamp().toString()
+                                    + values[i].getStatusCode().getValue().toString()
+                                    + System.getProperty("line.separator");
+                        } catch (Exception ex){
+                            logger.error("error parsing result for" + nodesToRead[i].getNodeId().toString());
+                        }
+                    }
+
+                    //clean up response
+                    serverResponse.trim();
+                }
+            }
+
+        }catch (Exception e) {
+            logger.error("Error parsing OPC Server Results: " + e.getMessage() + Arrays.toString(e.getStackTrace()));
+        }
+
+        return serverResponse.getBytes();
 	}
 
 	@Override
@@ -402,10 +400,6 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			// Set the starting node and parse the node tree
 			logger.debug("Parse the result list for node " + expNodeId.toString());
 			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
-			/*String str = parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId);
-			if (str != null){
-				stringBuilder.append(str);
-			}*/
 		}
 
 		return stringBuilder.toString();
