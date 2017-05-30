@@ -20,10 +20,12 @@ import org.opcfoundation.ua.transport.security.PrivKey;
 import org.opcfoundation.ua.transport.security.SecurityPolicy;
 import org.opcfoundation.ua.utils.CertificateUtils;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Utils {
 	
+		private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 		static String PRIVKEY_PASSWORD = "Opc.Ua";
 	
 	 	public static KeyPair getCert(String applicationName) {
@@ -49,9 +51,10 @@ public class Utils {
 				PrivKey myServerPrivateKey = PrivKey.load( privKeyFile, PRIVKEY_PASSWORD );
 				return new KeyPair(myServerCertificate, myServerPrivateKey); 
 			} catch (CertificateException e) {
-				System.out.println(e.toString());
+				logger.debug("Error while loading certificate ");
+				logger.error(e.getMessage());
 			} catch (NoSuchAlgorithmException e) {
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -107,7 +110,7 @@ public class Utils {
 					return keys;
 					
 				} catch (Exception e1) {
-					System.out.println(e1.toString());
+					logger.error(e1.getMessage());
 				}
 			}
 			return null;
@@ -122,14 +125,14 @@ public class Utils {
 				return new KeyPair(myServerCertificate, myServerPrivateKey); 
 			} catch (CertificateException e) {
 				
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (NoSuchAlgorithmException e) {
 				
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block
 				
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (InvalidKeySpecException e) {
 				// TODO Auto-generated catch block
 				
@@ -164,7 +167,7 @@ public class Utils {
 					keys.save(certFile, privKeyFile, PRIVKEY_PASSWORD);
 					return keys;
 				} catch (Exception e1) {
-					System.out.println(e1.toString());
+					logger.error(e1.getMessage());
 				}
 			}
 			return null;
@@ -178,7 +181,7 @@ public class Utils {
 				PrivKey myServerPrivateKey = PrivKey.load( privKeyFile, PRIVKEY_PASSWORD );
 				return new KeyPair(myServerCertificate, myServerPrivateKey); 
 			} catch (CertificateException e) {
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (IOException e) {		
 				try {
 					KeyPair keys = CertificateUtils.createIssuerCertificate("NifiCA", 3650, null);
@@ -186,10 +189,10 @@ public class Utils {
 					keys.getPrivateKey().save(privKeyFile, PRIVKEY_PASSWORD);
 					return keys;
 				} catch (Exception e1) {
-					System.out.println(e1.toString());
+					logger.error(e1.getMessage());
 				}
 			} catch (NoSuchAlgorithmException e) {
-				System.out.println(e.toString());
+				logger.error(e.getMessage());
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

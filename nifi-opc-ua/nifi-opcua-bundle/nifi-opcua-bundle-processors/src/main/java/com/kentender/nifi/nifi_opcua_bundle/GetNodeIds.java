@@ -169,46 +169,45 @@ public class GetNodeIds extends AbstractProcessor {
 		}
 		// Write the results back out to a flow file
 		FlowFile flowFile = session.create();
-		if ( flowFile == null ) {
-		    logger.error("Flowfile is null");
-		}
-		        
-		
-		
-        try{
-		flowFile = session.write(flowFile, new OutputStreamCallback() {
-            public void process(OutputStream out) throws IOException {
+				if ( flowFile != null ) {		  		
+			try{
+				flowFile = session.write(flowFile, new OutputStreamCallback() {
+					public void process(OutputStream out) throws IOException {
             	
-            	switch (remove_opc_string) {
+						switch (remove_opc_string) {
     			
-				case "Yes":{
-					String str = stringBuilder.toString();
-        			String parts[] = str.split("\\r?\\n");
-        			String outString = "";
-        			for (int i = 0; i < parts.length; i++){
-        			    if (parts[i].startsWith("nsu")){
-        			        continue;
-                        }
-        			    outString = outString + parts[i] + System.getProperty("line.separator");;
-                    }
-                    outString.trim();
-                    out.write(outString.getBytes());
-                    break;
-				}
-				case "No":{
-					out.write(stringBuilder.toString().getBytes());
-					break;
-				}
-			}
-            }
-		});
+						case "Yes":{
+							String str = stringBuilder.toString();
+							String parts[] = str.split("\\r?\\n");
+							String outString = "";
+							for (int i = 0; i < parts.length; i++){
+								if (parts[i].startsWith("nsu")){
+									continue;
+								}
+								outString = outString + parts[i] + System.getProperty("line.separator");;
+							}
+							outString.trim();
+							out.write(outString.getBytes());
+							break;
+						}
+						case "No":{
+							out.write(stringBuilder.toString().getBytes());
+							break;
+						}
+						}
+					}
+				});
         
-		// Transfer data to flow file
-        session.transfer(flowFile, SUCCESS);
-        }catch (ProcessException ex) {
-        	logger.error("Unable to process", ex);
-            session.transfer(flowFile, FAILURE);
-        }
+				// Transfer data to flow file
+				session.transfer(flowFile, SUCCESS);
+			}catch (ProcessException ex) {
+				logger.error("Unable to process", ex);
+				session.transfer(flowFile, FAILURE);
+			}
+		}else{
+        logger.error("Flowfile is null");
+        session.transfer(flowFile, FAILURE);
+      	}
 	}
 	
 
