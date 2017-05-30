@@ -342,8 +342,12 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		ReadValueId nodesToRead[] = new ReadValueId[reqTagnames.size()];
 
 		for (int i = 0; i < reqTagnames.size(); i++){
-            nodesToRead[i] = (new ReadValueId(NodeId.parseNodeId(reqTagnames.get(i)), Attributes.Value, null, null));
-        }
+            try{
+				nodesToRead[i] = (new ReadValueId(NodeId.parseNodeId(reqTagnames.get(i)), Attributes.Value, null, null));
+			}catch(Exception ex){
+				logger.error("error reading nodeId for" + reqTagnames.get(i));
+			}
+		}
 
 		String serverResponse = "";
 
