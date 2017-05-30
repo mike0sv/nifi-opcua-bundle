@@ -34,7 +34,7 @@ before_install:
   - git clone 'https://github.com/OPCFoundation/UA-Java.git' UA-Java
   - cd UA-Java
   - git checkout master
-  - mvn -DskipTests=true clean install
+  - mvn clean install -DskipTests
 
 install:
   - mvn clean install
