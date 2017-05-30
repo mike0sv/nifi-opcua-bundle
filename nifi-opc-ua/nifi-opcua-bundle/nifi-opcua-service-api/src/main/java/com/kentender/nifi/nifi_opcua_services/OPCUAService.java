@@ -28,8 +28,8 @@ import java.util.List;
 @CapabilityDescription("Provides client API for working with OPC servers")
 public interface OPCUAService extends ControllerService {
 
-	byte[] getValue(String reqTagname) throws ProcessException;
-
+	byte[] getValue(List<String> reqTagname) throws ProcessException;
+	
 	String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds)
 			throws ProcessException;
 

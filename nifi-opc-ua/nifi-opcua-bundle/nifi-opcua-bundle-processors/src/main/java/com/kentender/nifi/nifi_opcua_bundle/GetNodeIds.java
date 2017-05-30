@@ -41,6 +41,7 @@ public class GetNodeIds extends AbstractProcessor {
 	
 	private static String starting_node = null;
 	private static String print_indentation = "No";
+	private static String remove_opc_string = "No";
 	private static Integer max_recursiveDepth;
 	
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
@@ -71,6 +72,15 @@ public class GetNodeIds extends AbstractProcessor {
             .defaultValue("No")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
+
+    public static final PropertyDescriptor REMOVE_OPC_STRING = new PropertyDescriptor
+            .Builder().name("Remove OPC String")
+            .description("Should remove OPCfoundation string from the list")
+            .required(true)
+            .allowableValues("No", "Yes")
+            .defaultValue("No")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
     
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
@@ -93,7 +103,8 @@ public class GetNodeIds extends AbstractProcessor {
         descriptors.add(RECURSIVE_DEPTH);
         descriptors.add(STARTING_NODE);
         descriptors.add(PRINT_INDENTATION);
-
+        descriptors.add(REMOVE_OPC_STRING);
+        
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
@@ -118,6 +129,7 @@ public class GetNodeIds extends AbstractProcessor {
 		print_indentation = context.getProperty(PRINT_INDENTATION).getValue();
 		max_recursiveDepth = Integer.valueOf(context.getProperty(RECURSIVE_DEPTH).getValue());
 		starting_node = context.getProperty(STARTING_NODE).getValue();
+		remove_opc_string = context.getProperty(REMOVE_OPC_STRING).getValue();
 				
     }
 	
@@ -155,26 +167,47 @@ public class GetNodeIds extends AbstractProcessor {
             }
 			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
 		}
-		
 		// Write the results back out to a flow file
 		FlowFile flowFile = session.create();
-        if ( flowFile == null ) {
-        	logger.error("Flowfile is null");
-        }
-        try{
-		flowFile = session.write(flowFile, new OutputStreamCallback() {
-            public void process(OutputStream out) throws IOException {
-            	out.write(stringBuilder.toString().getBytes());
+				if ( flowFile != null ) {		  		
+			try{
+				flowFile = session.write(flowFile, new OutputStreamCallback() {
+					public void process(OutputStream out) throws IOException {
             	
-            }
-		});
+						switch (remove_opc_string) {
+    			
+						case "Yes":{
+							String str = stringBuilder.toString();
+							String parts[] = str.split("\\r?\\n");
+							String outString = "";
+							for (int i = 0; i < parts.length; i++){
+								if (parts[i].startsWith("nsu")){
+									continue;
+								}
+								outString = outString + parts[i] + System.getProperty("line.separator");;
+							}
+							outString.trim();
+							out.write(outString.getBytes());
+							break;
+						}
+						case "No":{
+							out.write(stringBuilder.toString().getBytes());
+							break;
+						}
+						}
+					}
+				});
         
-		// Transfer data to flow file
-        session.transfer(flowFile, SUCCESS);
-        }catch (ProcessException ex) {
-        	logger.error("Unable to process", ex);
-            session.transfer(flowFile, FAILURE);
-        }
+				// Transfer data to flow file
+				session.transfer(flowFile, SUCCESS);
+			}catch (ProcessException ex) {
+				logger.error("Unable to process", ex);
+				session.transfer(flowFile, FAILURE);
+			}
+		}else{
+        logger.error("Flowfile is null");
+        session.transfer(flowFile, FAILURE);
+      	}
 	}
 	
 
