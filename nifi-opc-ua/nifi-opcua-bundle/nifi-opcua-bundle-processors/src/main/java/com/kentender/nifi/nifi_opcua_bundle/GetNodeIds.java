@@ -61,7 +61,7 @@ public class GetNodeIds extends AbstractProcessor {
     
     public static final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
             .Builder().name("Recursive Depth")
-            .description("Maxium depth from the starting node to read, Default is 0")
+            .description("Maximum depth from the starting node to read, Default is 0")
             .required(true)
             .addValidator(StandardValidators.INTEGER_VALIDATOR)
             .build();
@@ -85,8 +85,8 @@ public class GetNodeIds extends AbstractProcessor {
             .build();
     
     public static final PropertyDescriptor MAX_REFERENCE_PER_NODE = new PropertyDescriptor
-            .Builder().name("Max Reference Per Node")
-            .description("Maxium reference to request from the node, Default is 1000")
+            .Builder().name("Max References Per Node")
+            .description("The number of Reference Descriptions to pull per node query.")
             .required(true)
             .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .build();
