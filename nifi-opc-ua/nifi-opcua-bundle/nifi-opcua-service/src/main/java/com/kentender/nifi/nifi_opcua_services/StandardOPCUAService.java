@@ -395,7 +395,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 	}
 
 	@Override
-	public String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds) throws ProcessException {
+	public String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds, UnsignedInteger max_reference_per_node) throws ProcessException {
 		
 		final ComponentLog logger = getLogger();
 		StringBuilder stringBuilder = new StringBuilder();
@@ -403,7 +403,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		for(ExpandedNodeId expNodeId : expandedNodeIds){
 			// Set the starting node and parse the node tree
 			logger.debug("Parse the result list for node " + expNodeId.toString());
-			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId));
+			stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId,max_reference_per_node, logger));
 		}
 
 		return stringBuilder.toString();
@@ -444,7 +444,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			String print_indentation, 
 			int recursiveDepth, 
 			int max_recursiveDepth, 
-			ExpandedNodeId expandedNodeId){
+			ExpandedNodeId expandedNodeId,
+			UnsignedInteger max_reference_per_node,
+			ComponentLog logger){
 		
 		
 		StringBuilder stringBuilder = new StringBuilder();
@@ -485,10 +487,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 		// Form response, make request 
 		BrowseResponse browseResponse = new BrowseResponse();
 		try {
-			browseResponse = mySession.Browse(browseRequest);
+			browseResponse = mySession.Browse(browseRequest.getRequestHeader(), browseRequest.getView(), max_reference_per_node, browseRequest.getNodesToBrowse());
 		} catch (Exception e) {
 
-			e.printStackTrace();
+			logger.error("failed to get browse response for " + browseRequest.getNodesToBrowse());
 			
 		} 
 		
@@ -521,7 +523,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 			stringBuilder.append(referenceDesc[k].getNodeId() + System.lineSeparator());
 			
 			// Print the child node(s)
-			String str = parseNodeTree(print_indentation, recursiveDepth + 1, max_recursiveDepth, referenceDesc[k].getNodeId());
+			String str = parseNodeTree(print_indentation, recursiveDepth + 1, max_recursiveDepth, referenceDesc[k].getNodeId(),max_reference_per_node,logger);
 			if (str != null){
 				stringBuilder.append(str);
 			}

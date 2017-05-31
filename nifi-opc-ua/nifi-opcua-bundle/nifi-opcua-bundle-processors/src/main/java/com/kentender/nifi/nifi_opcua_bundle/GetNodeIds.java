@@ -28,6 +28,7 @@ import org.apache.nifi.processor.io.OutputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.opcfoundation.ua.builtintypes.ExpandedNodeId;
 import org.opcfoundation.ua.builtintypes.NodeId;
+import org.opcfoundation.ua.builtintypes.UnsignedInteger;
 import org.opcfoundation.ua.core.Identifiers;
 import com.kentender.nifi.nifi_opcua_services.OPCUAService;
 
@@ -43,6 +44,7 @@ public class GetNodeIds extends AbstractProcessor {
 	private static String print_indentation = "No";
 	private static String remove_opc_string = "No";
 	private static Integer max_recursiveDepth;
+	private static Integer max_reference_per_node;
 	
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
@@ -59,7 +61,7 @@ public class GetNodeIds extends AbstractProcessor {
     
     public static final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
             .Builder().name("Recursive Depth")
-            .description("Maxium depth from the starting node to read, Default is 0")
+            .description("Maximum depth from the starting node to read, Default is 0")
             .required(true)
             .addValidator(StandardValidators.INTEGER_VALIDATOR)
             .build();
@@ -74,14 +76,22 @@ public class GetNodeIds extends AbstractProcessor {
             .build();
 
     public static final PropertyDescriptor REMOVE_OPC_STRING = new PropertyDescriptor
-            .Builder().name("Remove OPC String")
-            .description("Should remove OPCfoundation string from the list")
+            .Builder().name("Remove Expanded Node ID")
+            .description("Should remove Expanded Node ID string from the list")
             .required(true)
             .allowableValues("No", "Yes")
             .defaultValue("No")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
     
+    public static final PropertyDescriptor MAX_REFERENCE_PER_NODE = new PropertyDescriptor
+            .Builder().name("Max References Per Node")
+            .description("The number of Reference Descriptions to pull per node query.")
+            .required(true)
+			.defaultValue("1000")
+            .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
+            .build();
+            
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
             .description("Successful OPC read")
@@ -104,6 +114,7 @@ public class GetNodeIds extends AbstractProcessor {
         descriptors.add(STARTING_NODE);
         descriptors.add(PRINT_INDENTATION);
         descriptors.add(REMOVE_OPC_STRING);
+        descriptors.add(MAX_REFERENCE_PER_NODE);
         
         this.descriptors = Collections.unmodifiableList(descriptors);
 
@@ -130,7 +141,7 @@ public class GetNodeIds extends AbstractProcessor {
 		max_recursiveDepth = Integer.valueOf(context.getProperty(RECURSIVE_DEPTH).getValue());
 		starting_node = context.getProperty(STARTING_NODE).getValue();
 		remove_opc_string = context.getProperty(REMOVE_OPC_STRING).getValue();
-				
+		max_reference_per_node = Integer.valueOf(context.getProperty(MAX_REFERENCE_PER_NODE).getValue());		
     }
 	
 	@Override
@@ -154,7 +165,7 @@ public class GetNodeIds extends AbstractProcessor {
 			logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
 			List<ExpandedNodeId> ids = new ArrayList<>();
 			ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
 			
 		} else {
 			logger.debug("Parse the result list for node " + new ExpandedNodeId(NodeId.parseNodeId(starting_node)));
@@ -165,7 +176,7 @@ public class GetNodeIds extends AbstractProcessor {
             for(String split : splits) {
                 ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
             }
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
 		}
 		// Write the results back out to a flow file
 		FlowFile flowFile = session.create();
