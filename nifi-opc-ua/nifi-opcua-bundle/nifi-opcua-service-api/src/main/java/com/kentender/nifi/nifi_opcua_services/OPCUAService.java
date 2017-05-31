@@ -21,7 +21,7 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.controller.ControllerService;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.opcfoundation.ua.builtintypes.ExpandedNodeId;
-
+import org.opcfoundation.ua.builtintypes.UnsignedInteger;
 import java.util.List;
 
 @Tags({"OPC Service API"})
@@ -30,7 +30,7 @@ public interface OPCUAService extends ControllerService {
 
 	byte[] getValue(List<String> reqTagname) throws ProcessException;
 	
-	String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds)
+	String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds, UnsignedInteger max_reference_per_node)
 			throws ProcessException;
 
 	boolean updateSession();

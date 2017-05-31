@@ -28,6 +28,7 @@ import org.apache.nifi.processor.io.OutputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.opcfoundation.ua.builtintypes.ExpandedNodeId;
 import org.opcfoundation.ua.builtintypes.NodeId;
+import org.opcfoundation.ua.builtintypes.UnsignedInteger;
 import org.opcfoundation.ua.core.Identifiers;
 import com.kentender.nifi.nifi_opcua_services.OPCUAService;
 
@@ -43,6 +44,7 @@ public class GetNodeIds extends AbstractProcessor {
 	private static String print_indentation = "No";
 	private static String remove_opc_string = "No";
 	private static Integer max_recursiveDepth;
+	private static Integer max_reference_per_node;
 	
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
@@ -82,6 +84,13 @@ public class GetNodeIds extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
     
+    public static final PropertyDescriptor MAX_REFERENCE_PER_NODE = new PropertyDescriptor
+            .Builder().name("Max Reference Per Node")
+            .description("Maxium reference to request from the node, Default is 1000")
+            .required(true)
+            .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
+            .build();
+            
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
             .description("Successful OPC read")
@@ -104,6 +113,7 @@ public class GetNodeIds extends AbstractProcessor {
         descriptors.add(STARTING_NODE);
         descriptors.add(PRINT_INDENTATION);
         descriptors.add(REMOVE_OPC_STRING);
+        descriptors.add(MAX_REFERENCE_PER_NODE);
         
         this.descriptors = Collections.unmodifiableList(descriptors);
 
@@ -130,7 +140,7 @@ public class GetNodeIds extends AbstractProcessor {
 		max_recursiveDepth = Integer.valueOf(context.getProperty(RECURSIVE_DEPTH).getValue());
 		starting_node = context.getProperty(STARTING_NODE).getValue();
 		remove_opc_string = context.getProperty(REMOVE_OPC_STRING).getValue();
-				
+		max_reference_per_node = Integer.valueOf(context.getProperty(MAX_REFERENCE_PER_NODE).getValue());		
     }
 	
 	@Override
@@ -154,7 +164,7 @@ public class GetNodeIds extends AbstractProcessor {
 			logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
 			List<ExpandedNodeId> ids = new ArrayList<>();
 			ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
 			
 		} else {
 			logger.debug("Parse the result list for node " + new ExpandedNodeId(NodeId.parseNodeId(starting_node)));
@@ -165,7 +175,7 @@ public class GetNodeIds extends AbstractProcessor {
             for(String split : splits) {
                 ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
             }
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
 		}
 		// Write the results back out to a flow file
 		FlowFile flowFile = session.create();
