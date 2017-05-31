@@ -76,8 +76,8 @@ public class GetNodeIds extends AbstractProcessor {
             .build();
 
     public static final PropertyDescriptor REMOVE_OPC_STRING = new PropertyDescriptor
-            .Builder().name("Remove OPC String")
-            .description("Should remove OPCfoundation string from the list")
+            .Builder().name("Remove Expanded Node ID")
+            .description("Should remove Expanded Node ID string from the list")
             .required(true)
             .allowableValues("No", "Yes")
             .defaultValue("No")
@@ -88,6 +88,7 @@ public class GetNodeIds extends AbstractProcessor {
             .Builder().name("Max References Per Node")
             .description("The number of Reference Descriptions to pull per node query.")
             .required(true)
+			.defaultValue("1000")
             .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .build();
             
