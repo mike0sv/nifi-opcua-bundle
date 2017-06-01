@@ -335,7 +335,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
 	@Override
-	public byte[] getValue(List<String> reqTagnames) throws ProcessException {
+	public byte[] getValue(List<String> reqTagnames,String get_timestamp, String exclude_null_value) throws ProcessException {
 		final ComponentLog logger = getLogger();
 
 		//Create the nodes to read array
@@ -372,11 +372,31 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                     for (int i = 0; i < values.length; i++) {
                         try {
                             // Build flowfile line
-                            serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
-                                    + values[i].getValue().toString() + ","
-                                    + values[i].getServerTimestamp().toString()
-                                    + values[i].getStatusCode().getValue().toString()
-                                    + System.getProperty("line.separator");
+                        	if(exclude_null_value == "Yes" && values[i].getValue().toString() == "NULL"){
+                        	    continue;
+                        	}
+                        	else{
+                        		if(get_timestamp == "ServerTimestamp"){
+                        			serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
+                        					+ values[i].getValue().toString() + ","
+                        					+ values[i].getServerTimestamp().toString()+","
+                        					+ values[i].getStatusCode().getValue().toString()
+                        					+ System.getProperty("line.separator");
+                        		}else if(get_timestamp == "SourceTimestamp"){
+                        			serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
+                                            + values[i].getValue().toString() + ","
+                                            + values[i].getSourceTimestamp().toString()+","
+                                            + values[i].getStatusCode().getValue().toString()
+                                            + System.getProperty("line.separator");
+                        		}else if(get_timestamp == "Both"){
+                        			serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
+                                            + values[i].getValue().toString() + ","
+                                            + values[i].getServerTimestamp().toString()+","
+                                            + values[i].getSourceTimestamp().toString()+","
+                                            + values[i].getStatusCode().getValue().toString()
+                                            + System.getProperty("line.separator");
+                        		}
+                        	}
                         } catch (Exception ex){
                             logger.error("error parsing result for" + nodesToRead[i].getNodeId().toString());
                         }

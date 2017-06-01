@@ -28,7 +28,7 @@ import java.util.List;
 @CapabilityDescription("Provides client API for working with OPC servers")
 public interface OPCUAService extends ControllerService {
 
-	byte[] getValue(List<String> reqTagname) throws ProcessException;
+	byte[] getValue(List<String> reqTagname, String get_timestamp, String exclude_null_value) throws ProcessException;
 	
 	String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds, UnsignedInteger max_reference_per_node)
 			throws ProcessException;

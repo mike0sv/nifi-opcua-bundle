@@ -34,6 +34,7 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.io.OutputStreamCallback;
+import org.apache.nifi.processor.util.StandardValidators;
 
 import com.kentender.nifi.nifi_opcua_services.OPCUAService;
 
@@ -56,7 +57,9 @@ import java.util.stream.Collectors;
 public class GetValue extends AbstractProcessor {
 	
 	static boolean error = false;
-	  
+	private static String get_timestamp;
+	private static String exclude_null_value = "No";
+	
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
 			  .description("Specifies the OPC UA Service that can be used to access data")
@@ -64,6 +67,23 @@ public class GetValue extends AbstractProcessor {
 			  .identifiesControllerService(OPCUAService.class)
 			  .build();
     
+	public static final PropertyDescriptor GET_TIMESTAMP = new PropertyDescriptor
+            .Builder().name("Get Timestamp")
+            .description("Allows to select the source or server timestamp")
+            .required(true)
+            .allowableValues("SourceTimestamp", "ServerTimestamp","Both")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+	 
+	public static final PropertyDescriptor EXCLUDE_NULL_VALUE = new PropertyDescriptor
+	            .Builder().name("Exclude Null Value")
+	            .description("Get data only for non null values")
+	            .required(false)
+	            .allowableValues("No", "Yes")
+	            .defaultValue("No")
+	            .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
+	            .build();
+	 
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
             .description("Successful OPC read")
@@ -82,7 +102,9 @@ public class GetValue extends AbstractProcessor {
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
         descriptors.add(OPCUA_SERVICE);
-
+        descriptors.add(GET_TIMESTAMP);
+        descriptors.add(EXCLUDE_NULL_VALUE);
+        
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
@@ -103,7 +125,8 @@ public class GetValue extends AbstractProcessor {
 
     @OnScheduled
     public void onScheduled(final ProcessContext context) {
-    	
+    	get_timestamp = context.getProperty(GET_TIMESTAMP).getValue();;
+    	exclude_null_value =context.getProperty(EXCLUDE_NULL_VALUE).getValue();
 	}
 
     /* (non-Javadoc)
@@ -163,7 +186,7 @@ public class GetValue extends AbstractProcessor {
         	logger.debug("Session update failed");
         }
 
-        byte[] values = opcUAService.getValue(requestedTagnames.get());
+        byte[] values = opcUAService.getValue(requestedTagnames.get(),get_timestamp,exclude_null_value);
 
   		// Write the results back out to flow file
         try{
