@@ -335,7 +335,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
 	@Override
-	public byte[] getValue(List<String> reqTagnames) throws ProcessException {
+	public byte[] getValue(List<String> reqTagnames, String returnTimestamp, String excludeNullValue, String  nullValueString) throws ProcessException {
 		final ComponentLog logger = getLogger();
 
 		//Create the nodes to read array
@@ -365,21 +365,42 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
             // Validate response
             if (values != null) {
-                if (values.length == 0)
-                    logger.error("OPC Server returned nothing.");
+                if (values.length == 0) {
+					logger.error("OPC Server returned nothing.");
+				}
+
                 else {
                     // Iterate through values
                     for (int i = 0; i < values.length; i++) {
-                        try {
+						String valueLine = "";
+                    	try {
                             // Build flowfile line
-                            serverResponse = serverResponse + nodesToRead[i].getNodeId().toString() + ","
-                                    + values[i].getValue().toString() + ","
-                                    + values[i].getServerTimestamp().toString()
-                                    + values[i].getStatusCode().getValue().toString()
-                                    + System.getProperty("line.separator");
+                        	if(excludeNullValue.equals("Yes") && values[i].getValue().toString().equals(nullValueString)){
+                        		logger.debug("Null value returned for " + values[i].getValue().toString() + " -- Skipping because property is set");
+                        	    continue;
+                        	}
+
+							valueLine += nodesToRead[i].getNodeId().toString() + ",";
+
+							if(returnTimestamp.equals("ServerTimestamp") || returnTimestamp.equals("Both")){
+								valueLine += values[i].getServerTimestamp().toString() + ",";
+							}
+							if(returnTimestamp.equals("SourceTimestamp") || returnTimestamp.equals("Both")){
+								valueLine += values[i].getSourceTimestamp().toString() + ",";
+							}
+
+							valueLine += values[i].getValue().toString() + ","
+							+ values[i].getStatusCode().getValue().toString()
+							+ System.getProperty("line.separator");
+
                         } catch (Exception ex){
-                            logger.error("error parsing result for" + nodesToRead[i].getNodeId().toString());
+                            logger.error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
+                            valueLine = "";
                         }
+                        if (valueLine.isEmpty())
+                        	continue;
+
+                        serverResponse += valueLine;
                     }
 
                     //clean up response

@@ -34,6 +34,7 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.io.OutputStreamCallback;
+import org.apache.nifi.processor.util.StandardValidators;
 
 import com.kentender.nifi.nifi_opcua_services.OPCUAService;
 
@@ -54,9 +55,11 @@ import java.util.stream.Collectors;
 @InputRequirement(Requirement.INPUT_REQUIRED)
 
 public class GetValue extends AbstractProcessor {
-	
-	static boolean error = false;
-	  
+
+    private final AtomicReference<String> timestamp = new AtomicReference<>();
+    private final AtomicReference<String> excludeNullValue = new AtomicReference<>();
+    private final AtomicReference<String> nullValueString = new AtomicReference<>();
+
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
 			  .description("Specifies the OPC UA Service that can be used to access data")
@@ -64,6 +67,31 @@ public class GetValue extends AbstractProcessor {
 			  .identifiesControllerService(OPCUAService.class)
 			  .build();
     
+	public static final PropertyDescriptor RETURN_TIMESTAMP = new PropertyDescriptor
+            .Builder().name("Return Timestamp")
+            .description("Allows to select the source, server, or both timestamps")
+            .required(true)
+            .allowableValues("SourceTimestamp", "ServerTimestamp","Both")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+	 
+	public static final PropertyDescriptor EXCLUDE_NULL_VALUE = new PropertyDescriptor
+	            .Builder().name("Exclude Null Value")
+	            .description("Return data only for non null values")
+	            .required(true)
+	            .allowableValues("No", "Yes")
+	            .defaultValue("No")
+	            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+	            .build();
+
+    public static final PropertyDescriptor NULL_VALUE_STRING = new PropertyDescriptor
+            .Builder().name("Null Value String")
+            .description("If removing null values, what string is used for null")
+            .required(false)
+            .defaultValue("")
+            .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
+            .build();
+	 
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
             .description("Successful OPC read")
@@ -82,7 +110,10 @@ public class GetValue extends AbstractProcessor {
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
         descriptors.add(OPCUA_SERVICE);
-
+        descriptors.add(RETURN_TIMESTAMP);
+        descriptors.add(EXCLUDE_NULL_VALUE);
+        descriptors.add(NULL_VALUE_STRING);
+        
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
@@ -103,7 +134,9 @@ public class GetValue extends AbstractProcessor {
 
     @OnScheduled
     public void onScheduled(final ProcessContext context) {
-    	
+        timestamp.set(context.getProperty(RETURN_TIMESTAMP).getValue());
+        excludeNullValue.set(context.getProperty(EXCLUDE_NULL_VALUE).getValue());
+        nullValueString.set(context.getProperty(NULL_VALUE_STRING).getValue());
 	}
 
     /* (non-Javadoc)
@@ -115,9 +148,8 @@ public class GetValue extends AbstractProcessor {
     	final ComponentLog logger = getLogger();
     	
     	// Initialize  response variable
-    	final AtomicReference<List<String>> requestedTagnames = new AtomicReference<>();
-        
-        
+        final AtomicReference<List<String>> requestedTagnames = new AtomicReference<>();
+
         // get FlowFile
         FlowFile flowFile = session.get();
         if ( flowFile == null ) {
@@ -163,7 +195,7 @@ public class GetValue extends AbstractProcessor {
         	logger.debug("Session update failed");
         }
 
-        byte[] values = opcUAService.getValue(requestedTagnames.get());
+        byte[] values = opcUAService.getValue(requestedTagnames.get(),timestamp.get(),excludeNullValue.get(),nullValueString.get());
 
   		// Write the results back out to flow file
         try{
