@@ -4,8 +4,8 @@
 
 # nifi-opcua-bundle
 These processors and associated controller service allow NiFi access to OPC UA servers in a read-only fashion. This bundle
-provides 2 processors, GetNodeIds and GetValue. GetNodeIds allows access to the tags that are currently in the OPCUA server,
-GetValue takes a list of tags and queries the OPC UA server for the values. The StandardOPCUAService provides the connectivity
+provides 2 processors, GetOPCNodeList and GetOPCData. GetNodeIds allows access to the tags that are currently in the OPCUA server,
+GetOPCData takes a list of tags and queries the OPC UA server for the values. The StandardOPCUAService provides the connectivity
 to the OPCUA server so that multiple processors can leverage the same connection/session information.
 
 ## Table of Contents
