@@ -146,7 +146,7 @@
             </entry>
           </properties>
           <state>ENABLED</state>
-          <type>com.kentender.nifi.nifi_opcua_services.StandardOPCUAService</type>
+          <type>com.hashmapinc.tempus.processors.nifi_opcua_services.StandardOPCUAService</type>
         </controllerServices>
         <processors>
           <id>1eae1a15-015c-1000-0000-000000000000</id>
@@ -163,7 +163,7 @@
               <entry>
                 <key>OPC UA Service</key>
                 <value>
-                  <identifiesControllerService>com.kentender.nifi.nifi_opcua_services.OPCUAService</identifiesControllerService>
+                  <identifiesControllerService>com.hashmapinc.tempus.processors.nifi_opcua_services.OPCUAService</identifiesControllerService>
                   <name>OPC UA Service</name>
                 </value>
               </entry>
@@ -192,7 +192,7 @@
             <name>Success</name>
           </relationships>
           <style></style>
-          <type>com.kentender.nifi.nifi_opcua_bundle.GetValue</type>
+          <type>com.hashmapinc.tempus.processors.nifi_opcua_bundle.GetValue</type>
         </processors>
         <processors>
           <id>1eae34b4-015c-1000-0000-000000000000</id>
@@ -811,7 +811,7 @@
             </entry>
           </properties>
           <state>ENABLED</state>
-          <type>com.kentender.nifi.nifi_opcua_services.StandardOPCUAService</type>
+          <type>com.hashmapinc.tempus.processors.nifi_opcua_services.StandardOPCUAService</type>
         </controllerServices>
         <processors>
           <id>015c1000-0c34-1c2d-0000-000000000000</id>
@@ -828,7 +828,7 @@
               <entry>
                 <key>OPC UA Service</key>
                 <value>
-                  <identifiesControllerService>com.kentender.nifi.nifi_opcua_services.OPCUAService</identifiesControllerService>
+                  <identifiesControllerService>com.hashmapinc.tempus.processors.nifi_opcua_services.OPCUAService</identifiesControllerService>
                   <name>OPC UA Service</name>
                 </value>
               </entry>
@@ -887,7 +887,7 @@
             <name>Success</name>
           </relationships>
           <style></style>
-          <type>com.kentender.nifi.nifi_opcua_bundle.GetNodeIds</type>
+          <type>com.hashmapinc.tempus.processors.nifi_opcua_bundle.GetNodeIds</type>
         </processors>
         <processors>
           <id>015c1000-cf9c-1d8c-0000-000000000000</id>
