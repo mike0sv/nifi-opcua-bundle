@@ -86,7 +86,7 @@ public class GetOPCData extends AbstractProcessor {
             .Builder().name("Null Value String")
             .description("If removing null values, what string is used for null")
             .required(false)
-            .defaultValue("")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 	 
     public static final Relationship SUCCESS = new Relationship.Builder()

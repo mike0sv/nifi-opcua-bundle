@@ -67,7 +67,7 @@ Place that file into the following directory (where repo_location is the locatio
     
 Change directory into the root of the nifi-opcua-bundle codebase located in
 
-    {repo_location}/nifi-opcua-bundle/nifi-opc-ua
+    {repo_location}/nifi-opcua-bundle
     
 Execute a maven clean install
 
@@ -85,7 +85,7 @@ A Build success message should appear
 
 A NAR file should be located in the following directory
 
-    {repo_location}/nifi-opcua-bundle/nifi-opc-ua/nifi-opcua-bundle/nifi-opcua-bundle-nar/target
+    {repo_location}/nifi-opcua-bundle/nifi-opcua-bundle/nifi-opcua-bundle-nar/target
     
 Copy this NAR file to the /lib directory and restart (or start) Nifi.
 
@@ -209,9 +209,21 @@ The description of the properties is in the table below:
 | Exclude Null Value | false                | If your server has a well known null value and you would like to prevent pulling this data, set this to true and enter that well known value into the optional Null Value String property |
 | Null Value String  | <blank>              | If Exclude Null Value is set to true, then this will be the value that is used to filter out the tags.                                                                                    |
 
+For this example we will just write the data to a file using the PutData processor. So grab that processor and add it to the canvas as before.
+Configure it by putting in a valid path to a directory on your machine. Create a relationship by dragging your mouse from the GetOPCData processor to the 
+PutFile processor and ticking the **Success** box.
 
+Now your flow should look like the one below.
 
+<img src="https://github.com/hashmapinc/hashmap.github.io/blob/master/images/tempus/opc/completeflow.png" alt="addcontrollerservice.png"/>
 
+Now you should be able to start the flow, and have the data appear in files in the location you specified in the PutFile processor configuration.
+
+### Next Steps
+
+This is fine for a test, however, you would want to modify this in production use. Ideally you would have 2 flows, one that updates the tag list, and 
+one that gets the data for the tags. The one that updates the tag list would run at a lower frequency. Additionally, depending on the number of tags,
+the queries should be split up so that they don't overwhelm the server. 
 
 ## License
 
