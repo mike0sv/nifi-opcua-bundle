@@ -77,9 +77,9 @@ public class GetOPCData extends AbstractProcessor {
 	            .Builder().name("Exclude Null Value")
 	            .description("Return data only for non null values")
 	            .required(true)
-	            .allowableValues("No", "Yes")
-	            .defaultValue("No")
-	            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+	            .allowableValues("true", "false")
+	            .defaultValue("false")
+	            .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
 	            .build();
 
     public static final PropertyDescriptor NULL_VALUE_STRING = new PropertyDescriptor
@@ -87,7 +87,6 @@ public class GetOPCData extends AbstractProcessor {
             .description("If removing null values, what string is used for null")
             .required(false)
             .defaultValue("")
-            .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
             .build();
 	 
     public static final Relationship SUCCESS = new Relationship.Builder()
@@ -96,7 +95,7 @@ public class GetOPCData extends AbstractProcessor {
             .build();
     
     public static final Relationship FAILURE = new Relationship.Builder()
-            .name("FAILURE")
+            .name("Failure")
             .description("Failed OPC read")
             .build();
 
