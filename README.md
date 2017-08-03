@@ -182,7 +182,7 @@ An explanation of these different properties is in the table below:
 | Print Indentation       | No                                      | Now that we know what we are looking for, we don't have to make it easy to read anymore.                                                                                                |
 | Starting Nodes          | ns=2;s=SimulatedChannel.SimulatedDevice | This is the value we found in the previous step to be the root of the tree that contained the tag data.                                                                                 |
 | Remove Expanded Node Id | Yes                                     | This will remove the opcfoundation header that is not a valid tag for querying.                                                                                                         |
-| Max References Per Node | 1000                                    | If you have more than 1000 tags in your server you will want to increase this. NOTE, if you have a lot of tags. you might want to split the query into chunks via different processors. |
+| Max References Per Node | 1000                                    | If you have more than 1000 tags in your server you will want to increase this. NOTE, if you have a lot of tags, you might want to split the query into chunks via different processors. |
 
 Click Apply. Now the processor is configured to simply return a tag list as shown below.
 
