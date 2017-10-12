@@ -27,6 +27,7 @@ import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.reporting.InitializationException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opcfoundation.ua.application.Client;
 import org.opcfoundation.ua.application.SessionChannel;
@@ -39,6 +40,8 @@ import org.opcfoundation.ua.transport.security.SecurityPolicy;
 import org.opcfoundation.ua.utils.EndpointUtil;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.opcfoundation.ua.utils.EndpointUtil.selectBySecurityPolicy;
@@ -505,8 +508,12 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
     private String getDataInJSON(ReadValueId nodesToRead[], DataValue values[], String returnTimestamp, String excludeNullValue, String nullValueString, boolean longTimestamp) {
-        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
         Object ts = null;
+        Object name = null;
+        Object value = null;
+        Object quality = null;
+
         for (int i = 0; i < values.length; i++) {
             try {
                 // Add JSON Object for sensor values
@@ -514,20 +521,25 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                     getLogger().debug("Null value returned for " + values[i].getValue().toString() + " -- Skipping because property is set");
                     continue;
                 }
-
-                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp);
-                String[] key = nodesToRead[i].getNodeId().toString().split("\\.");
-                jsonObject.put(key[key.length - 1], values[i].getValue().toString());
-
+                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp); //timestamp
+                String[] key = nodesToRead[i].getNodeId().toString().split("=");
+                name =  key[key.length - 1].toString();
+                value = values[i].getValue(); //value
+                quality = values[i].getStatusCode().getValue();
+                // Build JSON element and add to JSON Array
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("id",name);
+                jsonObject.put("ts", ts);
+                jsonObject.put("vs", value);
+                jsonObject.put("q",quality);
+                jsonArray.put(jsonObject);
             } catch (Exception ex) {
                 getLogger().error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
             }
         }
-
         // Building JSON Data
         JSONObject finalJsonObject = new JSONObject()
-                                    .put("ts", ts)
-                                    .put("values", jsonObject);
+                                    .put("values", jsonArray);
 
         return finalJsonObject.toString();
     }
@@ -554,6 +566,24 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             throw ex;
         }
         return ts;
+    }
+
+    private String formatTimestamp(String timestamp , String formatInput, String formatOutput) {
+
+        // 10/10/17 07:21:34 - "MM/dd/y HH:mm:ss"
+        SimpleDateFormat d = new SimpleDateFormat(formatInput);
+        Date d1 = null;
+        try {
+            d1 = d.parse(timestamp);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        //String output = d.format(d1);
+        //"yyyy-MM-dd HH:mm:ss"
+        SimpleDateFormat sdfDate = new SimpleDateFormat(formatOutput);
+        String strDate = sdfDate.format(d1);
+
+        return strDate;
     }
 
     private boolean validateEndpoint(Client client, String security_policy, String discoveryServer, String url) {
