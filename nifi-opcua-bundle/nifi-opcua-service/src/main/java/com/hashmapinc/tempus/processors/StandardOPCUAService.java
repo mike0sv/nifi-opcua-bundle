@@ -27,6 +27,7 @@ import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.reporting.InitializationException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opcfoundation.ua.application.Client;
 import org.opcfoundation.ua.application.SessionChannel;
@@ -505,9 +506,15 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
     private String getDataInJSON(ReadValueId nodesToRead[], DataValue values[], String returnTimestamp, String excludeNullValue, String nullValueString, boolean longTimestamp) {
-        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
         Object ts = null;
+        Object name = null;
+        Object value = null;
+        Object quality = null;
+
         for (int i = 0; i < values.length; i++) {
+
+            JSONObject jsonObject = new JSONObject();
             try {
                 // Add JSON Object for sensor values
                 if (excludeNullValue.equals("true") && values[i].getValue().toString().equals(nullValueString)) {
@@ -515,19 +522,27 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                     continue;
                 }
 
-                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp);
-                String[] key = nodesToRead[i].getNodeId().toString().split("\\.");
-                jsonObject.put(key[key.length - 1], values[i].getValue().toString());
+                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp); //timestamp
+
+                //String[] key = nodesToRead[i].getNodeId().toString().split("\\.");
+                //jsonObject.put(key[key.length - 1], values[i].getValue().toString());
+                name = nodesToRead[i].getNodeId().toString());  //name
+                value = values[i].getValue().toString(); //value
+                quality = values[i].getStatusCode().getValue().toString(); //quality
 
             } catch (Exception ex) {
                 getLogger().error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
             }
+            // Build JSON element and add to JSON Array
+            jsonObject.put("id",name);
+            jsonObject.put("ts", ts);
+            jsonObject.put("vs", value);
+            jsonObject.put("q", quality);
+            jsonArray.put(jsonObject);
         }
-
         // Building JSON Data
         JSONObject finalJsonObject = new JSONObject()
-                                    .put("ts", ts)
-                                    .put("values", jsonObject);
+                                    .put("values", jsonArray);
 
         return finalJsonObject.toString();
     }
