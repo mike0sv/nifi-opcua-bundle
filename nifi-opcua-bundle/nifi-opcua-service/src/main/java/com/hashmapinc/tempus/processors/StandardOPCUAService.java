@@ -42,6 +42,8 @@ import org.opcfoundation.ua.utils.EndpointUtil;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.opcfoundation.ua.utils.EndpointUtil.selectBySecurityPolicy;
@@ -546,44 +548,31 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
         Object ts = null;
+        LocalDateTime ldt = null;
+        DateTimeFormatter formatPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         // Get Timestamp
         try {
             if (returnTimestamp.equals("ServerTimestamp")) {
                 if (longTimestamp) {
                     ts = value.getServerTimestamp().getTimeInMillis();
                 } else {
-                    ts = value.getServerTimestamp().toString();
+                    ldt = LocalDateTime.parse(value.getServerTimestamp().toString(), DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss.SSSSSSS z"));
+                    ts = ldt.format(formatPattern);
                 }
             }
             if (returnTimestamp.equals("SourceTimestamp")) {
                 if (longTimestamp) {
                     ts = value.getSourceTimestamp().getTimeInMillis();
                 } else {
-                    ts = value.getSourceTimestamp().toString();
+                    ldt = LocalDateTime.parse(value.getSourceTimestamp().toString(), DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss.SSSSSSS z"));
+                    ts = ldt.format(formatPattern);
                 }
             }
         } catch (Exception ex) {
             throw ex;
         }
         return ts;
-    }
-
-    private String formatTimestamp(String timestamp , String formatInput, String formatOutput) {
-
-        // 10/10/17 07:21:34 - "MM/dd/y HH:mm:ss"
-        SimpleDateFormat d = new SimpleDateFormat(formatInput);
-        Date d1 = null;
-        try {
-            d1 = d.parse(timestamp);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        //String output = d.format(d1);
-        //"yyyy-MM-dd HH:mm:ss"
-        SimpleDateFormat sdfDate = new SimpleDateFormat(formatOutput);
-        String strDate = sdfDate.format(d1);
-
-        return strDate;
     }
 
     private boolean validateEndpoint(Client client, String security_policy, String discoveryServer, String url) {
