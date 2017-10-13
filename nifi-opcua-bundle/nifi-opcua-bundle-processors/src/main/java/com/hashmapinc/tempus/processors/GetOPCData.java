@@ -233,7 +233,7 @@ public class GetOPCData extends AbstractProcessor {
         
         session.transfer(flowFile, SUCCESS);
         } catch (ProcessException ex) {
-        	logger.error("Unable to process", ex);
+        	logger.error("Unable to process: " + ex.getMessage());
         	session.transfer(flowFile, FAILURE);
         }
     }
