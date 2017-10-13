@@ -171,6 +171,7 @@ public class GetOPCData extends AbstractProcessor {
         // get FlowFile
         FlowFile flowFile = session.get();
         if ( flowFile == null ) {
+            logger.error("Flow File is null for session: " + session.toString());
             return;
         }
         // Read tag name from flow file content
