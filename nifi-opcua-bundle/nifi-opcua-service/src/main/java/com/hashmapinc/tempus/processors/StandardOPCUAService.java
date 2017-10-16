@@ -517,6 +517,8 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         Object quality = null;
 
         for (int i = 0; i < values.length; i++) {
+
+            JSONObject jsonObject = new JSONObject();
             try {
                 // Add JSON Object for sensor values
                 if (excludeNullValue.equals("true") && values[i].getValue().toString().equals(nullValueString)) {
