@@ -219,7 +219,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         // Load Client's certificates from file or create new certs
         logger.debug("Creating Certificates");
 
-        if (context.getProperty(SECURITY_POLICY).getValue() == "None") {
+        if (context.getProperty(SECURITY_POLICY).getValue().equals("None")) {
             // Build OPC Client
             logger.info("No Security Policy requested");
             myClientApplicationInstanceCertificate = null;
@@ -517,8 +517,6 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         Object quality = null;
 
         for (int i = 0; i < values.length; i++) {
-
-            JSONObject jsonObject = new JSONObject();
             try {
                 // Add JSON Object for sensor values
                 if (excludeNullValue.equals("true") && values[i].getValue().toString().equals(nullValueString)) {
