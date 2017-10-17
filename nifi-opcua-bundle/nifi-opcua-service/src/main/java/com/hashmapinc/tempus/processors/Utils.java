@@ -9,6 +9,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -218,4 +220,53 @@ public class Utils {
 			return null;
 		}
 
+		public static String convertDateToString(Date date, String dateFormat){
+			String formattedDate =  null;
+			try{
+				if(date != null)
+				{
+					SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+					formattedDate = sdf.format(date);
+				}
+			}catch(Exception e){
+				logger.error("Error excuting Utils.convertDateToString -->> "+e.getMessage());
+			}
+			return formattedDate;
+		}
+
+		public static Date convertStringToDate(String dateString, String dateFormat){
+			Date date =  null;
+			try{
+				if(dateString != null)
+				{
+					SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+					date = sdf.parse(dateString);
+
+				}
+			}catch(Exception e){
+				logger.error("Error excuting Utils.convertStringToDate -->> "+e.getMessage());
+			}
+			return date;
+		}
+
+		public static String convertStringDateFormat(String dateString, String inputDateFormat, String outputDateFormat){
+			String formattedDate =  null;
+
+			try{
+				if(dateString != null)
+				{
+					SimpleDateFormat sdf = new SimpleDateFormat(inputDateFormat);
+					Date date = sdf.parse(dateString);
+
+					SimpleDateFormat sdf1 = new SimpleDateFormat(outputDateFormat);
+					formattedDate = sdf1.format(date);
+
+				}
+			}catch(Exception e){
+				logger.error("Error excuting Utils.convertStringDateFormat -->> "+e.getMessage());
+			}
+			return formattedDate;
+		}
+
 }
+

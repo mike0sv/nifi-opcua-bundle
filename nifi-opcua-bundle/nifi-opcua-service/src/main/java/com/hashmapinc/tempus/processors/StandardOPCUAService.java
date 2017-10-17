@@ -546,7 +546,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         return finalJsonObject.toString();
     }
 
-    private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
+    /*private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
         Object ts = null;
         LocalDateTime ldt = null;
         DateTimeFormatter formatPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -567,6 +567,37 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                 } else {
                     ldt = LocalDateTime.parse(value.getSourceTimestamp().toString(), DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss.SSSSSSS z"));
                     ts = ldt.format(formatPattern);
+                }
+            }
+        } catch (Exception ex) {
+            throw ex;
+        }
+        return ts;
+    }*/
+
+    private String getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
+        String ts = null;
+        LocalDateTime ldt = null;
+        DateTimeFormatter formatPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Get Timestamp
+        try {
+            if (returnTimestamp.equals("ServerTimestamp")) {
+                if (longTimestamp) {
+                    ts = value.getServerTimestamp().getTimeInMillis()+"";
+                } else {
+
+                    ts = Utils.convertStringDateFormat(value.getServerTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
+
+                }
+            }
+            if (returnTimestamp.equals("SourceTimestamp")) {
+                if (longTimestamp) {
+                    ts = value.getSourceTimestamp().getTimeInMillis()+"";
+                } else {
+
+                    ts = Utils.convertStringDateFormat(value.getSourceTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
+
                 }
             }
         } catch (Exception ex) {
