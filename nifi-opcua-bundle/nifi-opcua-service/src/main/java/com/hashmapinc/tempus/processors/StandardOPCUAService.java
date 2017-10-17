@@ -40,6 +40,10 @@ import org.opcfoundation.ua.transport.security.SecurityPolicy;
 import org.opcfoundation.ua.utils.EndpointUtil;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.opcfoundation.ua.utils.EndpointUtil.selectBySecurityPolicy;
@@ -521,24 +525,21 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                     getLogger().debug("Null value returned for " + values[i].getValue().toString() + " -- Skipping because property is set");
                     continue;
                 }
-
                 ts = getTimeStamp(values[i], returnTimestamp, longTimestamp); //timestamp
-
-                //String[] key = nodesToRead[i].getNodeId().toString().split("\\.");
-                //jsonObject.put(key[key.length - 1], values[i].getValue().toString());
-                name = nodesToRead[i].getNodeId().toString());  //name
-                value = values[i].getValue().toString(); //value
-                quality = values[i].getStatusCode().getValue().toString(); //quality
-
+                String[] key = nodesToRead[i].getNodeId().toString().split("=");
+                name =  key[key.length - 1].toString();
+                value = values[i].getValue(); //value
+                quality = values[i].getStatusCode().getValue();
+                // Build JSON element and add to JSON Array
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("id",name);
+                jsonObject.put("ts", ts);
+                jsonObject.put("vs", value);
+                jsonObject.put("q",quality);
+                jsonArray.put(jsonObject);
             } catch (Exception ex) {
                 getLogger().error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
             }
-            // Build JSON element and add to JSON Array
-            jsonObject.put("id",name);
-            jsonObject.put("ts", ts);
-            jsonObject.put("vs", value);
-            jsonObject.put("q", quality);
-            jsonArray.put(jsonObject);
         }
         // Building JSON Data
         JSONObject finalJsonObject = new JSONObject()
@@ -549,20 +550,25 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
         Object ts = null;
+        LocalDateTime ldt = null;
+        DateTimeFormatter formatPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         // Get Timestamp
         try {
             if (returnTimestamp.equals("ServerTimestamp")) {
                 if (longTimestamp) {
                     ts = value.getServerTimestamp().getTimeInMillis();
                 } else {
-                    ts = value.getServerTimestamp().toString();
+                    ldt = LocalDateTime.parse(value.getServerTimestamp().toString(), DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss.SSSSSSS z"));
+                    ts = ldt.format(formatPattern);
                 }
             }
             if (returnTimestamp.equals("SourceTimestamp")) {
                 if (longTimestamp) {
                     ts = value.getSourceTimestamp().getTimeInMillis();
                 } else {
-                    ts = value.getSourceTimestamp().toString();
+                    ldt = LocalDateTime.parse(value.getSourceTimestamp().toString(), DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss.SSSSSSS z"));
+                    ts = ldt.format(formatPattern);
                 }
             }
         } catch (Exception ex) {
