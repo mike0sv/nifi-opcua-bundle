@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
 import org.apache.nifi.annotation.behavior.WritesAttribute;
@@ -175,49 +177,64 @@ public class GetOPCNodeList extends AbstractProcessor {
             for(String split : splits) {
                 ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
             }
-			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
-		}
-		// Write the results back out to a flow file
-		FlowFile flowFile = session.create();
-				if ( flowFile != null ) {		  		
-			try{
-				flowFile = session.write(flowFile, new OutputStreamCallback() {
-					public void process(OutputStream out) throws IOException {
-            	
-						switch (remove_opc_string) {
-    			
-						case "Yes":{
-							String str = stringBuilder.toString();
-							String parts[] = str.split("\\r?\\n");
-							String outString = "";
-							for (int i = 0; i < parts.length; i++){
-								if (parts[i].startsWith("nsu")){
-									continue;
+
+			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node));
+
+            if (StringUtils.isNotBlank(nameSpace))
+			{
+				stringBuilder.append(nameSpace);
+
+				// Write the results back out to a flow file
+				FlowFile flowFile = session.create();
+
+				if ( flowFile != null ) {
+					try{
+						flowFile = session.write(flowFile, new OutputStreamCallback() {
+							public void process(OutputStream out) throws IOException {
+
+								switch (remove_opc_string) {
+
+									case "Yes":{
+										String str = stringBuilder.toString();
+										String parts[] = str.split("\\r?\\n");
+										String outString = "";
+										for (int i = 0; i < parts.length; i++){
+											if (parts[i].startsWith("nsu")){
+												continue;
+											}
+											outString = outString + parts[i] + System.getProperty("line.separator");;
+										}
+										outString.trim();
+										out.write(outString.getBytes());
+										break;
+									}
+									case "No":{
+										out.write(stringBuilder.toString().getBytes());
+										break;
+									}
 								}
-								outString = outString + parts[i] + System.getProperty("line.separator");;
 							}
-							outString.trim();
-							out.write(outString.getBytes());
-							break;
-						}
-						case "No":{
-							out.write(stringBuilder.toString().getBytes());
-							break;
-						}
-						}
+						});
+
+						// Transfer data to flow file
+						session.transfer(flowFile, SUCCESS);
+					}catch (ProcessException ex) {
+						logger.error("Unable to process", ex);
+						session.transfer(flowFile, FAILURE);
 					}
-				});
-        
-				// Transfer data to flow file
-				session.transfer(flowFile, SUCCESS);
-			}catch (ProcessException ex) {
-				logger.error("Unable to process", ex);
-				session.transfer(flowFile, FAILURE);
+				}else{
+
+					logger.error("Flowfile is null");
+					session.transfer(flowFile, FAILURE);
+				}
+			} else
+			{
+				logger.error("No namespace found: opcUAService.getNameSpace(...) returned empty or null");
 			}
-		}else{
-        logger.error("Flowfile is null");
-        session.transfer(flowFile, FAILURE);
-      	}
+
+
+		}
+
 	}
 	
 
