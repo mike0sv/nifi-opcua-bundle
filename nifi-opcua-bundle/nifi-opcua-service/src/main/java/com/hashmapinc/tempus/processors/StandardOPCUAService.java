@@ -582,24 +582,29 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
         // Get Timestamp
         try {
-            if (returnTimestamp.equals("ServerTimestamp")) {
-                if (longTimestamp) {
-                    ts = value.getServerTimestamp().getTimeInMillis()+"";
-                } else {
 
-                    ts = Utils.convertStringDateFormat(value.getServerTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
+            if(!value.isNull())
+            {
+                if (returnTimestamp.equals("ServerTimestamp")) {
+                    if (longTimestamp) {
+                        ts = value.getServerTimestamp().getTimeInMillis()+"";
+                    } else {
 
+                        ts = Utils.convertStringDateFormat(value.getServerTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
+
+                    }
+                }
+                if (returnTimestamp.equals("SourceTimestamp")) {
+                    if (longTimestamp) {
+                        ts = value.getSourceTimestamp().getTimeInMillis()+"";
+                    } else {
+
+                        ts = Utils.convertStringDateFormat(value.getSourceTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
+
+                    }
                 }
             }
-            if (returnTimestamp.equals("SourceTimestamp")) {
-                if (longTimestamp) {
-                    ts = value.getSourceTimestamp().getTimeInMillis()+"";
-                } else {
 
-                    ts = Utils.convertStringDateFormat(value.getSourceTimestamp().toString(), "MM/dd/yy HH:mm:ss.SSSSSSS z", "yyyy-MM-dd HH:mm:ss.SSS");
-
-                }
-            }
         } catch (Exception ex) {
             throw ex;
         }
