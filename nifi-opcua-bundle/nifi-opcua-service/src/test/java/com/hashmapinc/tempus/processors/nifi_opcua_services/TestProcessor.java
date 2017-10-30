@@ -19,6 +19,7 @@ package com.hashmapinc.tempus.processors.nifi_opcua_services;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hashmapinc.tempus.processors.StandardOPCUAService;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.processor.AbstractProcessor;
 import org.apache.nifi.processor.ProcessContext;
@@ -31,15 +32,15 @@ public class TestProcessor extends AbstractProcessor {
     public void onTrigger(ProcessContext context, ProcessSession session) throws ProcessException {
     }
 
-/*    @Override
+    @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
         List<PropertyDescriptor> propDescs = new ArrayList<>();
         propDescs.add(new PropertyDescriptor.Builder()
-                .name("MyService test processor")
-                .description("MyService test processor")
-                .identifiesControllerService(MyService.class)
-                .required(true)
+                .name("hi")
+                .description("StandardOPCUAService test processor")
+                .identifiesControllerService(StandardOPCUAService.class)
+                .required(false)
                 .build());
         return propDescs;
-    }*/
+    }
 }
