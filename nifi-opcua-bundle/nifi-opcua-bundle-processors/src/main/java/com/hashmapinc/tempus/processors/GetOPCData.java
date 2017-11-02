@@ -17,6 +17,7 @@
 
 package com.hashmapinc.tempus.processors;
 
+import jdk.nashorn.internal.parser.JSONParser;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.logging.ComponentLog;
@@ -35,6 +36,8 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.io.OutputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -108,6 +111,13 @@ public class GetOPCData extends AbstractProcessor {
             .required(false)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
+
+    public static final PropertyDescriptor DEVICE_TOKEN = new PropertyDescriptor.Builder()
+            .name("Device Token")
+            .description("Specifies device Token")
+            .required(false)
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
 	 
     public static final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
@@ -117,6 +127,11 @@ public class GetOPCData extends AbstractProcessor {
     public static final Relationship FAILURE = new Relationship.Builder()
             .name("Failure")
             .description("Failed OPC read")
+            .build();
+
+    public static final Relationship SENDPOST = new Relationship.Builder()
+            .name("Send Post")
+            .description("Successful Post")
             .build();
 
     private List<PropertyDescriptor> descriptors;
@@ -132,11 +147,13 @@ public class GetOPCData extends AbstractProcessor {
         descriptors.add(NULL_VALUE_STRING);
         descriptors.add(DATA_FORMAT);
         descriptors.add(LONG_TIMESTAMP);
+        descriptors.add(DEVICE_TOKEN);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
         relationships.add(SUCCESS);
         relationships.add(FAILURE);
+        relationships.add(SENDPOST);
         this.relationships = Collections.unmodifiableSet(relationships);
     }
 
@@ -167,9 +184,11 @@ public class GetOPCData extends AbstractProcessor {
     	
     	// Initialize  response variable
         final AtomicReference<List<String>> requestedTagnames = new AtomicReference<>();
+        StringBuilder nameSpacesList = new StringBuilder();
 
         // get FlowFile
         FlowFile flowFile = session.get();
+        FlowFile flowFilePost = session.create();
         if ( flowFile == null ) {
             return;
         }
@@ -181,7 +200,10 @@ public class GetOPCData extends AbstractProcessor {
                 try{
                 	List<String> tagname = new BufferedReader(new InputStreamReader(in))
                 	.lines().collect(Collectors.toList());
-                	
+                	//First Line is comma separated name spaces.
+                	nameSpacesList.append(tagname.get(0));
+                	tagname.remove(0);
+                	//logger.error("namespaceList" + nameSpacesList);
                     requestedTagnames.set(tagname);
                     
                 }catch (Exception e) {
@@ -213,11 +235,41 @@ public class GetOPCData extends AbstractProcessor {
         	logger.debug("Session update failed");
         }
 
-        byte[] values = opcUAService.getValue(requestedTagnames.get(),timestamp.get(),excludeNullValue.get(),nullValueString.get(), context.getProperty(DATA_FORMAT).getValue(), context.getProperty(LONG_TIMESTAMP).asBoolean());
+        String[] nsList = nameSpacesList.toString().split(",");
+        //logger.error("nsList" + nsList[0]);
+        byte[] values = opcUAService.getValue(requestedTagnames.get(),nsList,timestamp.get(),excludeNullValue.get(),nullValueString.get(), context.getProperty(DATA_FORMAT).getValue(), context.getProperty(LONG_TIMESTAMP).asBoolean());
 
+        //Creating flowfile for SENDPOST.
+        JSONObject jsonObjectPost = new JSONObject();
+        String valuesStr = new String(values);
+        logger.debug("value Str : " + valuesStr);
+        Map<String, List<String>> nsTagListMap = new HashMap<>();
+        JSONArray jsonArray = new JSONArray(valuesStr);
+        for (Object obj : jsonArray) {
+                JSONObject jsonObject = (JSONObject) obj;
+                logger.debug("jsonObject " + jsonObject);
+                String device = jsonObject.get("device").toString();
+                logger.debug("device " + device);
+                if (nsTagListMap.containsKey(device)) {
+                    List<String> list = nsTagListMap.get(device);
+                    list.add(jsonObject.get("key").toString());
+                    nsTagListMap.put(device, list);
+                } else {
+                    List<String> list = new ArrayList<String>();
+                    list.add(jsonObject.get("key").toString());
+                    nsTagListMap.put(device, list);
+                }
+            }
+
+        for (Map.Entry<String, List<String>> entry : nsTagListMap.entrySet()) {
+            jsonObjectPost.put(entry.getKey(), entry.getValue());
+        }
+
+        byte[] valuesToPostProcessor = jsonObjectPost.toString().getBytes();
         // Updating content-type if Data format is JSON
         if (context.getProperty(DATA_FORMAT).getValue().toString().equals("JSON")) {
             session.putAttribute(flowFile, "mime.type", "application/json");
+            session.putAttribute(flowFilePost, "mime.type", "application/json");
         }
         
   		// Write the results back out to flow file
@@ -236,6 +288,22 @@ public class GetOPCData extends AbstractProcessor {
         	logger.error("Unable to process", ex);
         	session.transfer(flowFile, FAILURE);
         }
+
+        try {
+            flowFilePost = session.write(flowFilePost, new OutputStreamCallback() {
+
+                @Override
+                public void process(OutputStream out) throws IOException {
+                    out.write(valuesToPostProcessor);
+                }
+
+            });
+            session.transfer(flowFilePost, SENDPOST);
+        }catch (ProcessException ex) {
+            logger.error("Unable to process", ex);
+            session.transfer(flowFilePost, FAILURE);
+        }
+
     }
     
 }

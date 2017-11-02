@@ -160,6 +160,7 @@ public class GetOPCNodeList extends AbstractProcessor {
         }
         
 		// Set the starting node and parse the node tree
+		StringBuilder nameSpaces = new StringBuilder();
 		if ( starting_node == null) {
 			logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
 			List<ExpandedNodeId> ids = new ArrayList<>();
@@ -171,7 +172,7 @@ public class GetOPCNodeList extends AbstractProcessor {
             List<ExpandedNodeId> ids = new ArrayList<>();
 
             String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
-
+			nameSpaces.append(NodeId.parseNodeId(starting_node).toString());
             for(String split : splits) {
                 ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
             }
@@ -190,11 +191,15 @@ public class GetOPCNodeList extends AbstractProcessor {
 							String str = stringBuilder.toString();
 							String parts[] = str.split("\\r?\\n");
 							String outString = "";
+							if(nameSpaces.toString().length() != 0){
+								outString = outString + nameSpaces.toString()
+										+ System.getProperty("line.separator");
+							}
 							for (int i = 0; i < parts.length; i++){
-								if (parts[i].startsWith("nsu")){
+								if (parts[i].contains("nsu")){
 									continue;
 								}
-								outString = outString + parts[i] + System.getProperty("line.separator");;
+								outString = outString + parts[i] + System.getProperty("line.separator");
 							}
 							outString.trim();
 							out.write(outString.getBytes());

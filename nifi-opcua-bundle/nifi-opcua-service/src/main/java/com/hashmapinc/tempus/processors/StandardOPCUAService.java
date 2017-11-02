@@ -27,6 +27,7 @@ import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.reporting.InitializationException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opcfoundation.ua.application.Client;
 import org.opcfoundation.ua.application.SessionChannel;
@@ -406,7 +407,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
     @Override
-    public byte[] getValue(List<String> reqTagnames, String returnTimestamp, String excludeNullValue, String nullValueString, String dataFormat, boolean longTimestamp) throws ProcessException {
+    public byte[] getValue(List<String> reqTagnames, String[] nsList,String returnTimestamp, String excludeNullValue, String nullValueString, String dataFormat, boolean longTimestamp) throws ProcessException {
         final ComponentLog logger = getLogger();
 
         //Create the nodes to read array
@@ -446,7 +447,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                             serverResponse.trim();
                             break;
                         case "JSON" :
-                            serverResponse = getDataInJSON(nodesToRead, values, returnTimestamp, excludeNullValue, nullValueString, longTimestamp);
+                            serverResponse = getDataInJSON(nodesToRead, nsList, values, returnTimestamp, excludeNullValue, nullValueString, longTimestamp);
                             break;
                     }
                 }
@@ -504,32 +505,40 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         return serverResponse;
     }
 
-    private String getDataInJSON(ReadValueId nodesToRead[], DataValue values[], String returnTimestamp, String excludeNullValue, String nullValueString, boolean longTimestamp) {
-        JSONObject jsonObject = new JSONObject();
-        Object ts = null;
+    private String getDataInJSON(ReadValueId nodesToRead[], String[] nsList, DataValue values[], String returnTimestamp, String excludeNullValue, String nullValueString, boolean longTimestamp) {
+        JSONArray jsonArray = new JSONArray();
+        //Object ts = null;
         for (int i = 0; i < values.length; i++) {
+            getLogger().error("OK_HMDC");
             try {
                 // Add JSON Object for sensor values
                 if (excludeNullValue.equals("true") && values[i].getValue().toString().equals(nullValueString)) {
                     getLogger().debug("Null value returned for " + values[i].getValue().toString() + " -- Skipping because property is set");
+                    getLogger().error("HMDC_IS_NULL");
                     continue;
                 }
 
-                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp);
-                String[] key = nodesToRead[i].getNodeId().toString().split("\\.");
-                jsonObject.put(key[key.length - 1], values[i].getValue().toString());
+                //ts = getTimeStamp(values[i], returnTimestamp, longTimestamp);
+                getLogger().error("NSLIST : " + nsList[0]);
+                for (String ns : nsList) {
+                    getLogger().error("here NSLIST " + ns);
+                    String tag = nodesToRead[i].getNodeId().toString();
+                    String[] tagSplit = tag.split("\\.");
+                    if(tag.contains(ns)){
+                        JSONObject obj = new JSONObject();
+                        obj.put("device",ns);
+                        obj.put("key",tagSplit[tagSplit.length - 1 ]);
+                        obj.put("value",values[i].getValue().toString());
+                        jsonArray.put(obj);
+                        break;
+                    }
+                }
 
             } catch (Exception ex) {
                 getLogger().error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
             }
         }
-
-        // Building JSON Data
-        JSONObject finalJsonObject = new JSONObject()
-                                    .put("ts", ts)
-                                    .put("values", jsonObject);
-
-        return finalJsonObject.toString();
+        return jsonArray.toString();
     }
 
     private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{

@@ -14,3 +14,4 @@
 # limitations under the License.
 com.hashmapinc.tempus.processors.GetOPCNodeList
 com.hashmapinc.tempus.processors.GetOPCData
+com.hashmapinc.tempus.processors.ConvertToJsonOPC
