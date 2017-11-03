@@ -150,7 +150,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 		final ComponentLog logger = getLogger();
 		StringBuilder stringBuilder = new StringBuilder();
-
+    
 		try
 		{
 
@@ -215,7 +215,9 @@ public class GetOPCNodeList extends AbstractProcessor {
 											out.write(stringBuilder.toString().getBytes());
 											break;
 										}
+
 									}
+									outString = outString + parts[i] + System.getProperty("line.separator");;
 								}
 							});
 

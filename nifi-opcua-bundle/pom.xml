@@ -29,8 +29,8 @@
         <module>nifi-opcua-bundle-nar</module>
         <module>nifi-opcua-service</module>
         <module>nifi-opcua-service-api</module>
-        <module>nifi-opcua-service-api-nar</module>
-        <module>nifi-opcua-service-nar</module>
+        <!-- <module>nifi-opcua-service-api-nar</module>
+        <module>nifi-opcua-service-nar</module> -->
     </modules>
 
     <dependencies>
