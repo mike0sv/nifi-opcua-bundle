@@ -217,7 +217,6 @@ public class GetOPCNodeList extends AbstractProcessor {
 										}
 
 									}
-									outString = outString + parts[i] + System.getProperty("line.separator");;
 								}
 							});
 
