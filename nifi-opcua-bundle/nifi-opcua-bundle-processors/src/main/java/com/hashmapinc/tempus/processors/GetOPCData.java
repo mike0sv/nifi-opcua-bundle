@@ -211,7 +211,8 @@ public class GetOPCData extends AbstractProcessor {
         if(opcUAService.updateSession()){
         	logger.debug("Session current");
         }else {
-        	logger.debug("Session update failed");
+        	logger.error("GetOPCData.onTrigger() - Session Update Failed");
+        	return;  //flow should return here if the session cannot be updated
         }
 
         byte[] values = opcUAService.getValue(requestedTagnames.get(),timestamp.get(),excludeNullValue.get(),nullValueString.get(), context.getProperty(DATA_FORMAT).getValue(), context.getProperty(LONG_TIMESTAMP).asBoolean());
@@ -223,16 +224,25 @@ public class GetOPCData extends AbstractProcessor {
         
   		// Write the results back out to flow file
         try{
-        flowFile = session.write(flowFile, new OutputStreamCallback() {
+            if(values != null)
+            {
+                flowFile = session.write(flowFile, new OutputStreamCallback()
+                {
 
-            @Override
-            public void process(OutputStream out) throws IOException {
-                out.write(values);
+                    @Override
+                    public void process(OutputStream out) throws IOException {
+                        out.write(values);
+                    }
+
+                });
+
+                session.transfer(flowFile, SUCCESS);
+            }else
+            {
+                logger.error("GetOPCData.onTrigger() - Unable to process: Values is null" );
+                session.transfer(flowFile, FAILURE);
             }
-            
-        });
-        
-        session.transfer(flowFile, SUCCESS);
+
         } catch (ProcessException ex) {
         	logger.error("Unable to process: " + ex.getMessage());
         	session.transfer(flowFile, FAILURE);
