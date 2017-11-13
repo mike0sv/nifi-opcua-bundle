@@ -76,6 +76,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             .Builder().name("Authentication Policy")
             .description("How should Nifi authenticate with the UA server")
             .required(true)
+            .defaultValue("Anon")
             .allowableValues("Anon", "Username")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
@@ -111,10 +112,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         props.add(ENDPOINT);
         props.add(SECURITY_POLICY);
         props.add(SERVER_CERT);
-        props.add(APPLICATION_NAME);
+        props.add(AUTH_POLICY);
         props.add(USERNAME);
         props.add(PASSWORD);
-        props.add(AUTH_POLICY);
+        props.add(APPLICATION_NAME);
         properties = Collections.unmodifiableList(props);
     }
 
