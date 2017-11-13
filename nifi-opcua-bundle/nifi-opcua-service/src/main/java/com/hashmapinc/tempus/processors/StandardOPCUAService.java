@@ -67,9 +67,30 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             .build();
     public static final PropertyDescriptor SECURITY_POLICY = new PropertyDescriptor
             .Builder().name("Security Policy")
-            .description("How should Nifi authenticate with the UA server")
+            .description("How should Nifi create the connection with the UA server")
             .required(true)
             .allowableValues("None", "Basic128Rsa15", "Basic256", "Basic256Rsa256")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+    public static final PropertyDescriptor AUTH_POLICY = new PropertyDescriptor
+            .Builder().name("Authentication Policy")
+            .description("How should Nifi authenticate with the UA server")
+            .required(true)
+            .defaultValue("Anon")
+            .allowableValues("Anon", "Username")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+    public static final PropertyDescriptor USERNAME = new PropertyDescriptor
+            .Builder().name("User Name")
+            .description("The user name to be used for the connection.")
+            .required(false)
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+    public static final PropertyDescriptor PASSWORD = new PropertyDescriptor
+            .Builder().name("Password")
+            .description("The Password to be used for the connection")
+            .required(false)
+            .sensitive(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
     public static final PropertyDescriptor APPLICATION_NAME = new PropertyDescriptor
@@ -78,6 +99,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             .required(true)
             .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
             .build();
+
     private static final List<PropertyDescriptor> properties;
     // Global session variables used by all processors using an instance
     private static Client opcClient = null;
@@ -90,6 +112,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         props.add(ENDPOINT);
         props.add(SECURITY_POLICY);
         props.add(SERVER_CERT);
+        props.add(AUTH_POLICY);
+        props.add(USERNAME);
+        props.add(PASSWORD);
         props.add(APPLICATION_NAME);
         properties = Collections.unmodifiableList(props);
     }
@@ -348,7 +373,14 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
 
             currentSession = opcClient.createSessionChannel(endpointDescription);
-            activateSessionResponse = currentSession.activate();
+            String authType = context.getProperty(AUTH_POLICY).getValue();
+            if (authType.equals("Anon")) {
+                activateSessionResponse = currentSession.activate();
+            } else {
+                String userName = context.getProperty(USERNAME).getValue();
+                String password = context.getProperty(PASSWORD).getValue();
+                activateSessionResponse = currentSession.activate(userName, password);
+            }
 
             timestamp = System.currentTimeMillis();
 
