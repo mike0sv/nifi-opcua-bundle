@@ -58,14 +58,14 @@ public class GetOPCData extends AbstractProcessor {
     private final AtomicReference<String> excludeNullValue = new AtomicReference<>();
     private final AtomicReference<String> nullValueString = new AtomicReference<>();
 
-	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
+	public final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			  .name("OPC UA Service")
 			  .description("Specifies the OPC UA Service that can be used to access data")
 			  .required(true)
 			  .identifiesControllerService(OPCUAService.class)
 			  .build();
     
-	public static final PropertyDescriptor RETURN_TIMESTAMP = new PropertyDescriptor
+	public final PropertyDescriptor RETURN_TIMESTAMP = new PropertyDescriptor
             .Builder().name("Return Timestamp")
             .description("Allows to select the source, server, or both timestamps")
             .required(true)
@@ -73,7 +73,7 @@ public class GetOPCData extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 	 
-	public static final PropertyDescriptor EXCLUDE_NULL_VALUE = new PropertyDescriptor
+	public final PropertyDescriptor EXCLUDE_NULL_VALUE = new PropertyDescriptor
 	            .Builder().name("Exclude Null Value")
 	            .description("Return data only for non null values")
 	            .required(true)
@@ -82,7 +82,7 @@ public class GetOPCData extends AbstractProcessor {
 	            .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
 	            .build();
 
-    public static final PropertyDescriptor DATA_FORMAT = new PropertyDescriptor
+    public final PropertyDescriptor DATA_FORMAT = new PropertyDescriptor
             .Builder().name("DATA_FORMAT")
             .displayName("Data Format")
             .description("The format the data should be in, either CSV or JSON")
@@ -92,7 +92,7 @@ public class GetOPCData extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    public static final PropertyDescriptor LONG_TIMESTAMP = new PropertyDescriptor
+    public final PropertyDescriptor LONG_TIMESTAMP = new PropertyDescriptor
             .Builder().name("LONG_TIMESTAMP")
             .displayName("Use Long Timestamp")
             .description("If True it will use number of milliseconds from the epoch, if not it will use an ISO8601 compatable timestamp.")
@@ -102,19 +102,19 @@ public class GetOPCData extends AbstractProcessor {
             .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
             .build();
 
-    public static final PropertyDescriptor NULL_VALUE_STRING = new PropertyDescriptor
+    public final PropertyDescriptor NULL_VALUE_STRING = new PropertyDescriptor
             .Builder().name("Null Value String")
             .description("If removing null values, what string is used for null")
             .required(false)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 	 
-    public static final Relationship SUCCESS = new Relationship.Builder()
+    public final Relationship SUCCESS = new Relationship.Builder()
             .name("Success")
             .description("Successful OPC read")
             .build();
     
-    public static final Relationship FAILURE = new Relationship.Builder()
+    public final Relationship FAILURE = new Relationship.Builder()
             .name("Failure")
             .description("Failed OPC read")
             .build();

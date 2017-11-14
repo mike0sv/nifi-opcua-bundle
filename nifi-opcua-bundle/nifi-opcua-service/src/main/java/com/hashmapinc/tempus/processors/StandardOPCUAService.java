@@ -16,6 +16,7 @@
  */
 package com.hashmapinc.tempus.processors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnDisabled;
@@ -80,10 +81,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             .build();
     private static final List<PropertyDescriptor> properties;
     // Global session variables used by all processors using an instance
-    private static Client opcClient = null;
-    private static SessionChannel currentSession = null;
-    private static EndpointDescription endpointDescription = null;
-    private static ActivateSessionResponse activateSessionResponse = null;
+    private Client opcClient = null;
+    private SessionChannel currentSession = null;
+    private EndpointDescription endpointDescription = null;
+    private ActivateSessionResponse activateSessionResponse = null;
 
     static {
         final List<PropertyDescriptor> props = new ArrayList<>();
@@ -96,7 +97,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     private double timestamp;
 
-    private static String parseNodeTree(
+    private String parseNodeTree(
             String print_indentation,
             int recursiveDepth,
             int max_recursiveDepth,
@@ -414,12 +415,32 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     public byte[] getValue(List<String> reqTagnames, String returnTimestamp, String excludeNullValue, String nullValueString, String dataFormat, boolean longTimestamp) throws ProcessException {
         final ComponentLog logger = getLogger();
 
-        //Create the nodes to read array
-        ReadValueId nodesToRead[] = new ReadValueId[reqTagnames.size()];
-
+        //filter the unwanted tag names
+        List<String> validReqTagNames = new ArrayList();
         for (int i = 0; i < reqTagnames.size(); i++) {
+            String reqTagName = reqTagnames.get(i);
+            if(StringUtils.isNotBlank(reqTagName))
+            {
+                String subReqTagname = reqTagName.substring(reqTagName.lastIndexOf('.'));
+                if(!subReqTagname.startsWith("._"))
+                {
+                    validReqTagNames.add(reqTagName);
+                }
+            }
+
+        }
+
+        //Create the nodes to read array
+        ReadValueId nodesToRead[] = new ReadValueId[validReqTagNames.size()];
+
+        for (int i = 0; i < validReqTagNames.size(); i++) {
             try {
-                nodesToRead[i] = (new ReadValueId(NodeId.parseNodeId(reqTagnames.get(i)), Attributes.Value, null, null));
+                String validReqTagName = validReqTagNames.get(i);
+                if(StringUtils.isNotBlank(validReqTagName))
+                {
+                    nodesToRead[i] = (new ReadValueId(NodeId.parseNodeId(validReqTagName), Attributes.Value, null, null));
+                }
+
             } catch (Exception ex) {
                 logger.error("error reading nodeId for" + reqTagnames.get(i));
             }

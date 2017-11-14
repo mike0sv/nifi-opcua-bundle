@@ -41,26 +41,26 @@ import org.opcfoundation.ua.core.Identifiers;
 
 public class GetOPCNodeList extends AbstractProcessor {
 
-	private static String starting_node = null;
-	private static String print_indentation = "No";
-	private static String remove_opc_string = "No";
-	private static Integer max_recursiveDepth;
-	private static Integer max_reference_per_node;
+	private String starting_node = null;
+	private String print_indentation = "No";
+	private String remove_opc_string = "No";
+	private Integer max_recursiveDepth;
+	private Integer max_reference_per_node;
 
-	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
+	public final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			.name("OPC UA Service")
 			.description("Specifies the OPC UA Service that can be used to access data")
 			.required(true)
 			.identifiesControllerService(OPCUAService.class)
 			.build();
 
-	public static final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
+	public final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
 			.Builder().name("Starting Nodes")
 			.description("From what node should Nifi begin browsing the node tree. Default is the root node. Seperate multiple nodes with a comma (,)")
 			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
 			.build();
 
-	public static final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
+	public final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
 			.Builder().name("Recursive Depth")
 			.description("Maximum depth from the starting node to read, Default is 0")
 			.required(true)
@@ -76,7 +76,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
 			.build();
 
-	public static final PropertyDescriptor REMOVE_OPC_STRING = new PropertyDescriptor
+	public final PropertyDescriptor REMOVE_OPC_STRING = new PropertyDescriptor
 			.Builder().name("Remove Expanded Node ID")
 			.description("Should remove Expanded Node ID string from the list")
 			.required(true)
@@ -85,7 +85,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
 			.build();
 
-	public static final PropertyDescriptor MAX_REFERENCE_PER_NODE = new PropertyDescriptor
+	public final PropertyDescriptor MAX_REFERENCE_PER_NODE = new PropertyDescriptor
 			.Builder().name("Max References Per Node")
 			.description("The number of Reference Descriptions to pull per node query.")
 			.required(true)
@@ -93,12 +93,12 @@ public class GetOPCNodeList extends AbstractProcessor {
 			.addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
 			.build();
 
-	public static final Relationship SUCCESS = new Relationship.Builder()
+	public final Relationship SUCCESS = new Relationship.Builder()
 			.name("Success")
 			.description("Successful OPC read")
 			.build();
 
-	public static final Relationship FAILURE = new Relationship.Builder()
+	public final Relationship FAILURE = new Relationship.Builder()
 			.name("Failure")
 			.description("Failed OPC read")
 			.build();

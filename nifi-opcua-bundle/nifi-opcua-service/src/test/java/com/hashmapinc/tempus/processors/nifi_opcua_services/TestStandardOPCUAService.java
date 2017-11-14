@@ -19,6 +19,7 @@ package com.hashmapinc.tempus.processors.nifi_opcua_services;
 import com.hashmap.tempus.opc.test.server.TestServer;
 import com.hashmapinc.tempus.processors.OPCUAService;
 import com.hashmapinc.tempus.processors.StandardOPCUAService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.reporting.InitializationException;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
@@ -26,6 +27,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opcfoundation.ua.builtintypes.ExpandedNodeId;
+import org.opcfoundation.ua.builtintypes.NodeId;
 import org.opcfoundation.ua.builtintypes.UnsignedInteger;
 import org.opcfoundation.ua.core.Identifiers;
 import static org.junit.Assert.*;
@@ -82,6 +84,43 @@ public class TestStandardOPCUAService {
 
         assertNotNull(result);
         assertNotEquals(result.length(), 0);
+    }
+
+    @Test
+    public void testGetNodeListFromMultipleChannels() throws InitializationException {
+
+        //This testcase is incomplete
+
+        final TestRunner firstRunner = TestRunners.newTestRunner(TestProcessor.class);
+        final StandardOPCUAService firstService = new StandardOPCUAService();
+
+        firstRunner.addControllerService("firstService", firstService);
+
+        firstRunner.setProperty(firstService, StandardOPCUAService.APPLICATION_NAME, "nifi");
+        firstRunner.setProperty(firstService, StandardOPCUAService.ENDPOINT, "opc.tcp://127.0.0.1:45678/test");
+        firstRunner.setProperty(firstService, StandardOPCUAService.SECURITY_POLICY, "NONE");
+
+        firstRunner.enableControllerService(firstService);
+
+        String starting_node = "";
+        List<ExpandedNodeId> ids = new ArrayList<>();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
+
+        for (String split : splits) {
+            ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
+        }
+
+        stringBuilder.append(firstService.getNameSpace("No", 0, ids, new UnsignedInteger(1000)));
+
+        String firstResult = stringBuilder.toString();
+
+        firstRunner.assertValid();
+
+        assertNotNull(firstResult);
+        assertNotEquals(firstResult.length(), 0);
+
     }
 
     @After
