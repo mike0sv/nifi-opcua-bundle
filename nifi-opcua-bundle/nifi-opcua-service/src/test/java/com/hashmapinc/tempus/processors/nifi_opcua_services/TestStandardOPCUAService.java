@@ -86,7 +86,7 @@ public class TestStandardOPCUAService {
         assertNotEquals(result.length(), 0);
     }
 
-    @Test
+    /*@Test
     public void testGetNodeListFromMultipleChannels() throws InitializationException {
 
         //This testcase is incomplete
@@ -121,7 +121,7 @@ public class TestStandardOPCUAService {
         assertNotNull(firstResult);
         assertNotEquals(firstResult.length(), 0);
 
-    }
+    } */
 
     @After
     public void shutdown(){
