@@ -106,6 +106,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     private SessionChannel currentSession = null;
     private EndpointDescription endpointDescription = null;
     private ActivateSessionResponse activateSessionResponse = null;
+    private String userName = null;
+    private String password = null;
+    private String authType = null;
 
     static {
         final List<PropertyDescriptor> props = new ArrayList<>();
@@ -239,6 +242,16 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         KeyPair myClientApplicationInstanceCertificate = null;
         KeyPair myHttpsCertificate = null;
 
+        if (userName == null){
+            userName = context.getProperty(USERNAME).getValue();
+        }
+        if (password == null){
+            password = context.getProperty(PASSWORD).getValue();
+        }
+        if (authType == null){
+            authType = context.getProperty(AUTH_POLICY).getValue();
+        }
+
         // Initialize OPC UA Client
 
         // Load Client's certificates from file or create new certs
@@ -371,16 +384,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
         try {
 
-
             currentSession = opcClient.createSessionChannel(endpointDescription);
             String authType = context.getProperty(AUTH_POLICY).getValue();
-            if (authType.equals("Anon")) {
-                activateSessionResponse = currentSession.activate();
-            } else {
-                String userName = context.getProperty(USERNAME).getValue();
-                String password = context.getProperty(PASSWORD).getValue();
-                activateSessionResponse = currentSession.activate(userName, password);
-            }
+            activateSession(authType, context.getProperty(USERNAME).getValue(), context.getProperty(PASSWORD).getValue());
 
             timestamp = System.currentTimeMillis();
 
@@ -394,6 +400,15 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     }
 
+    private void activateSession(String authPolicy, String userName, String password) throws ServiceResultException {
+
+        if (authPolicy.equals("Anon")) {
+            activateSessionResponse = currentSession.activate();
+        } else {
+            activateSessionResponse = currentSession.activate(userName, password);
+        }
+    }
+
     public boolean updateSession() {
 
         final ComponentLog logger = getLogger();
@@ -405,7 +420,11 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         if ((elapsedTime) < currentSession.getSession().getSessionTimeout()) {
             logger.debug("StandardOPCUAService.updateSession() :- using current session");
             timestamp = System.currentTimeMillis();
-
+            try {
+                activateSession(authType, userName, password);
+            } catch (ServiceResultException e) {
+                logger.error("StandardOPCUAService.updateSession() :- issue updating session");
+            }
             return true;
 
         } else {
@@ -416,7 +435,8 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
                 // TODO future should support multi session management
                 currentSession = opcClient.createSessionChannel(endpointDescription);
-                currentSession.activate();
+
+                activateSession(authType, userName, password);
 
                 timestamp = System.currentTimeMillis();
 
