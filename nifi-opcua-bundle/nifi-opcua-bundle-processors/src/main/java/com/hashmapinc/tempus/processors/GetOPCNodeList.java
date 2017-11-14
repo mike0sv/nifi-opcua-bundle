@@ -161,7 +161,8 @@ public class GetOPCNodeList extends AbstractProcessor {
 			if (opcUAService.updateSession()) {
 				logger.debug("Session current");
 			} else {
-				logger.debug("Session update failed");
+				logger.error("Session update failed");
+				return;
 			}
 
 			List<ExpandedNodeId> ids = new ArrayList<>();
