@@ -41,11 +41,11 @@ import org.opcfoundation.ua.core.Identifiers;
 
 public class GetOPCNodeList extends AbstractProcessor {
 
-	private static String starting_node = null;
-	private static String print_indentation = "No";
-	private static String remove_opc_string = "No";
-	private static Integer max_recursiveDepth;
-	private static Integer max_reference_per_node;
+	private String starting_node = null;
+	private String print_indentation = "No";
+	private String remove_opc_string = "No";
+	private Integer max_recursiveDepth;
+	private Integer max_reference_per_node;
 
 	public static final PropertyDescriptor OPCUA_SERVICE = new PropertyDescriptor.Builder()
 			.name("OPC UA Service")
