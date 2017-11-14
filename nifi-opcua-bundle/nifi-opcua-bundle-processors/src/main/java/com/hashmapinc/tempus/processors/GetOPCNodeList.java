@@ -162,72 +162,77 @@ public class GetOPCNodeList extends AbstractProcessor {
         }
         
 		// Set the starting node and parse the node tree
-		List<ExpandedNodeId> ids = new ArrayList<>();
-
 		if ( starting_node == null) {
 			logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
+			List<ExpandedNodeId> ids = new ArrayList<>();
 			ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-			//stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
+			stringBuilder.append(opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node)));
 			
 		} else {
 			logger.debug("Parse the result list for node " + new ExpandedNodeId(NodeId.parseNodeId(starting_node)));
-			String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
+            List<ExpandedNodeId> ids = new ArrayList<>();
 
-			for (String split : splits) {
-				ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
-			}
-		}
+            String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
 
-		String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node));
+            for(String split : splits) {
+                ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
+            }
 
-		if (StringUtils.isNotBlank(nameSpace))
-		{
-			stringBuilder.append(nameSpace);
+			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids,new UnsignedInteger(max_reference_per_node));
 
-			// Write the results back out to a flow file
-			FlowFile flowFile = session.create();
+            if (StringUtils.isNotBlank(nameSpace))
+			{
+				stringBuilder.append(nameSpace);
 
-			if ( flowFile != null ) {
-				try{
-					flowFile = session.write(flowFile, out -> {
+				// Write the results back out to a flow file
+				FlowFile flowFile = session.create();
 
-						switch (remove_opc_string) {
+				if ( flowFile != null ) {
+					try{
+						flowFile = session.write(flowFile, new OutputStreamCallback() {
+							public void process(OutputStream out) throws IOException {
 
-							case "Yes":{
-								String str = stringBuilder.toString();
-								String parts[] = str.split("\\r?\\n");
-								String outString = "";
-								for (int i = 0; i < parts.length; i++){
-									if (parts[i].startsWith("nsu")){
-										continue;
+								switch (remove_opc_string) {
+
+									case "Yes":{
+										String str = stringBuilder.toString();
+										String parts[] = str.split("\\r?\\n");
+										String outString = "";
+										for (int i = 0; i < parts.length; i++){
+											if (parts[i].startsWith("nsu")){
+												continue;
+											}
+											outString = outString + parts[i] + System.getProperty("line.separator");;
+										}
+										outString.trim();
+										out.write(outString.getBytes());
+										break;
 									}
-									outString = outString + parts[i] + System.getProperty("line.separator");;
+									case "No":{
+										out.write(stringBuilder.toString().getBytes());
+										break;
+									}
 								}
-								outString.trim();
-								out.write(outString.getBytes());
-								break;
 							}
-							case "No":{
-								out.write(stringBuilder.toString().getBytes());
-								break;
-							}
-						}
-					});
+						});
 
-					// Transfer data to flow file
-					session.transfer(flowFile, SUCCESS);
-				}catch (ProcessException ex) {
-					logger.error("Unable to process", ex);
+						// Transfer data to flow file
+						session.transfer(flowFile, SUCCESS);
+					}catch (ProcessException ex) {
+						logger.error("Unable to process", ex);
+						session.transfer(flowFile, FAILURE);
+					}
+				}else{
+
+					logger.error("Flowfile is null");
 					session.transfer(flowFile, FAILURE);
 				}
-			}else{
-
-				logger.error("Flowfile is null");
-				session.transfer(flowFile, FAILURE);
+			} else
+			{
+				logger.error("No namespace found: opcUAService.getNameSpace(...) returned empty or null");
 			}
-		} else
-		{
-			logger.error("No namespace found: opcUAService.getNameSpace(...) returned empty or null");
+
+
 		}
 
 	}
