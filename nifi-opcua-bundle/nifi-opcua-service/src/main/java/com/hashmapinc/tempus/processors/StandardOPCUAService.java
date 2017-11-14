@@ -399,11 +399,11 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         final ComponentLog logger = getLogger();
         double elapsedTime = System.currentTimeMillis() - timestamp;
         if (elapsedTime < 0) {
-            logger.debug("not a valid timestamp");
+            logger.debug("StandardOPCUAService.updateSession() :- not a valid timestamp");
             return false;
         }
         if ((elapsedTime) < currentSession.getSession().getSessionTimeout()) {
-
+            logger.debug("StandardOPCUAService.updateSession() :- using current session");
             timestamp = System.currentTimeMillis();
 
             return true;
@@ -411,16 +411,21 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         } else {
             try {
 
+                logger.debug("StandardOPCUAService.updateSession() :- Creating new session - " +
+                        "endpointDescription: "+endpointDescription);
+
                 // TODO future should support multi session management
                 currentSession = opcClient.createSessionChannel(endpointDescription);
                 currentSession.activate();
 
                 timestamp = System.currentTimeMillis();
 
+                logger.debug("StandardOPCUAService.updateSession() :- Creating new session - Success");
+
                 return true;
 
             } catch (ServiceResultException e) {
-                logger.error("Error while creating new session: " + e.getMessage());
+                logger.error("StandardOPCUAService.updateSession() :- Error while creating new session: " + e.getMessage());
                 return false;
             }
         }
