@@ -113,7 +113,7 @@ public class TestStandardOPCUAService {
         assertNotEquals(result.length(), 0);
     }
 
-    @Test
+    /*@Test
     public void testNodeListFromMultipleServers() throws InitializationException, Exception {
         try
         {
@@ -178,7 +178,7 @@ public class TestStandardOPCUAService {
             throw e;
         }
 
-    }
+    }*/
 
     @After
     public void shutdown(){
