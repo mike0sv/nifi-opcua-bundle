@@ -102,10 +102,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     private static final List<PropertyDescriptor> properties;
     // Global session variables used by all processors using an instance
-    private static Client opcClient = null;
-    private static SessionChannel currentSession = null;
-    private static EndpointDescription endpointDescription = null;
-    private static ActivateSessionResponse activateSessionResponse = null;
+    private Client opcClient = null;
+    private SessionChannel currentSession = null;
+    private EndpointDescription endpointDescription = null;
+    private ActivateSessionResponse activateSessionResponse = null;
 
     static {
         final List<PropertyDescriptor> props = new ArrayList<>();
@@ -121,7 +121,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
     private double timestamp;
 
-    private static String parseNodeTree(
+    private String parseNodeTree(
             String print_indentation,
             int recursiveDepth,
             int max_recursiveDepth,

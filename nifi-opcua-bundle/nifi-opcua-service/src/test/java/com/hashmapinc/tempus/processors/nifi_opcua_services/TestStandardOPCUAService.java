@@ -113,6 +113,73 @@ public class TestStandardOPCUAService {
         assertNotEquals(result.length(), 0);
     }
 
+    /*@Test
+    public void testNodeListFromMultipleServers() throws InitializationException, Exception {
+        try
+        {
+            TestServer secondServer = new TestServer(12345);
+
+            //First Server
+            final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
+            final StandardOPCUAService service = new StandardOPCUAService();
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            runner.addControllerService("OPC1", service);
+
+            runner.setProperty(service, StandardOPCUAService.APPLICATION_NAME, "nifi");
+            runner.setProperty(service, StandardOPCUAService.ENDPOINT, "opc.tcp://127.0.0.1:45678/test");
+            runner.setProperty(service, StandardOPCUAService.SECURITY_POLICY, "NONE");
+
+            runner.enableControllerService(service);
+
+            //Second Server
+            final TestRunner secondRunner = TestRunners.newTestRunner(TestProcessor.class);
+            final StandardOPCUAService secondService = new StandardOPCUAService();
+
+            secondRunner.addControllerService("OPC2", secondService);
+
+            secondRunner.setProperty(secondService, StandardOPCUAService.APPLICATION_NAME, "nifi");
+            secondRunner.setProperty(secondService, StandardOPCUAService.ENDPOINT, "opc.tcp://127.0.0.1:12345/test");
+            secondRunner.setProperty(secondService, StandardOPCUAService.SECURITY_POLICY, "NONE");
+
+            secondRunner.enableControllerService(secondService);
+
+            StringBuilder secondStringBuilder = new StringBuilder();
+
+            //calling nodelist for first server
+            List<ExpandedNodeId> ids = new ArrayList<>();
+            ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
+            stringBuilder.append(service.getNameSpace("No", 3, ids, new UnsignedInteger(1000)));
+
+            String result = stringBuilder.toString();
+
+            runner.assertValid();
+
+            assertNotNull(result);
+            assertNotEquals(result.length(), 0);
+
+
+            //calling nodeList for second server
+            List<ExpandedNodeId> idsList = new ArrayList<>();
+            idsList.add(new ExpandedNodeId((Identifiers.RootFolder)));
+            stringBuilder.append(secondService.getNameSpace("No", 3, idsList, new UnsignedInteger(1000)));
+
+            String secondResult = stringBuilder.toString();
+
+            secondRunner.assertValid();
+
+            assertNotNull(secondResult);
+            assertNotEquals(secondResult.length(), 0);
+
+        }catch(Exception e)
+        {
+            //todo
+            throw e;
+        }
+
+    }*/
+
     @After
     public void shutdown(){
         server.stop();
