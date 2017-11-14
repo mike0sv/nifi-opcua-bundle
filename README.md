@@ -1,4 +1,4 @@
-<img src="https://github.com/hashmapinc/hashmap.github.io/blob/master/images/tempus/TempusLogoBlack2.png" width="950" height="245" alt="Hashmap, Inc Tempus"/>
+<img src="https://github.com/hashmapinc/hashmap.github.io/blob/master/images/tempus/TempusLogoBlack2.svg" width="950" height="245" alt="Hashmap, Inc Tempus"/>
 
 [![License](http://img.shields.io/:license-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
