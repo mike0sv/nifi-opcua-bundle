@@ -23,6 +23,7 @@ import org.apache.nifi.annotation.lifecycle.OnEnabled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.controller.AbstractControllerService;
 import org.apache.nifi.controller.ConfigurationContext;
+import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
@@ -583,13 +584,22 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                 ts = getTimeStamp(values[i], returnTimestamp, longTimestamp); //timestamp
                 String[] key = nodesToRead[i].getNodeId().toString().split("=");
                 name =  key[key.length - 1].toString();
-                value = values[i].getValue(); //value
+                value = values[i].getValue().getValue(); //value
+                if (value == null){
+                    continue;
+                }
+                Class clazz = value.getClass();
                 quality = values[i].getStatusCode().getValue();
                 // Build JSON element and add to JSON Array
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("id",name);
                 jsonObject.put("ts", ts);
-                jsonObject.put("vs", value);
+                if (clazz.equals(Double.class) || clazz.equals(Short.class) || clazz.equals(Integer.class))
+                    jsonObject.put("vd", value);
+                else if (clazz.equals(Long.class) || clazz.equals(Float.class))
+                    jsonObject.put("vl", value);
+                else
+                    jsonObject.put("vs", value);
                 jsonObject.put("q",quality);
                 jsonArray.put(jsonObject);
             } catch (Exception ex) {
