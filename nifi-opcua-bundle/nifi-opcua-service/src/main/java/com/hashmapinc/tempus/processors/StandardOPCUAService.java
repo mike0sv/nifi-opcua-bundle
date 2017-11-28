@@ -424,7 +424,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             try {
                 activateSession(authType, userName, password);
             } catch (ServiceResultException e) {
-                logger.error("StandardOPCUAService.updateSession() :- issue updating session");
+                logger.error("StandardOPCUAService.updateSession() :- issue updating session"+e.getMessage());
             }
             return true;
 
