@@ -597,9 +597,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                 if (clazz.equals(Double.class) || clazz.equals(Short.class) || clazz.equals(Integer.class))
                     jsonObject.put("vd", value);
                 else if (clazz.equals(Long.class) || clazz.equals(Float.class))
-                    jsonObject.put("vl", value);
+                    jsonObject.put("vd", value);
                 else
-                    jsonObject.put("vs", value);
+                    jsonObject.put("vs", value.toString().trim());
                 jsonObject.put("q",quality);
                 jsonArray.put(jsonObject);
             } catch (Exception ex) {
