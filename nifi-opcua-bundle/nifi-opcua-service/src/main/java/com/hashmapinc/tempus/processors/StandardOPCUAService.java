@@ -317,7 +317,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
             // Describe end point
             endpointDescription = new EndpointDescription();
             endpointDescription.setEndpointUrl(context.getProperty(ENDPOINT).getValue());
-            endpointDescription.setServerCertificate(myOwnCert.getEncoded());
+            endpointDescription.setServerCertificate(ByteString.valueOf(myOwnCert.getEncoded()));
             endpointDescription.setSecurityMode(MessageSecurityMode.Sign);
 
             switch (context.getProperty(SECURITY_POLICY).getValue()) {
