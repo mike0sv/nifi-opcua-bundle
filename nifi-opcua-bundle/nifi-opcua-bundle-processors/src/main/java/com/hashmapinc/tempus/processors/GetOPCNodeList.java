@@ -189,6 +189,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 				if (flowFile != null) {
 					try {
+						flowFile = session.putAttribute(flowFile, "recursiveDepth", Integer.toString(max_recursiveDepth));
 						flowFile = session.write(flowFile, new OutputStreamCallback() {
 							public void process(OutputStream out) throws IOException {
 
