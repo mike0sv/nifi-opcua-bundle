@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class TestStandardOPCUAService {
 
@@ -75,7 +76,8 @@ public class TestStandardOPCUAService {
         runner.enableControllerService(service);
         List<ExpandedNodeId> ids = new ArrayList<>();
         ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-        stringBuilder.append(service.getNameSpace("No", 3, ids, new UnsignedInteger(1000)));
+        Pattern pattern = Pattern.compile("[^\\.].*");
+        stringBuilder.append(service.getNameSpace("No", 3, pattern, new UnsignedInteger(1000)));
 
         String result = stringBuilder.toString();
 
@@ -103,7 +105,8 @@ public class TestStandardOPCUAService {
         runner.enableControllerService(service);
         List<ExpandedNodeId> ids = new ArrayList<>();
         ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-        stringBuilder.append(service.getNameSpace("No", 3, ids, new UnsignedInteger(1000)));
+        Pattern pattern = Pattern.compile("[^\\.].*");
+        stringBuilder.append(service.getNameSpace("No", 3, pattern, new UnsignedInteger(1000)));
 
         String result = stringBuilder.toString();
 

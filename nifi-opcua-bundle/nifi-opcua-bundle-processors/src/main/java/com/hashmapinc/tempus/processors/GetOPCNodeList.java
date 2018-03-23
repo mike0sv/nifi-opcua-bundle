@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
@@ -56,14 +57,15 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 	public static final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
 			.Builder().name("Starting Nodes")
-			.description("From what node should Nifi begin browsing the node tree. Default is the root node. Seperate multiple nodes with a comma (,)")
-			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+			.description("Provide regular expression for nodes you want to fetch data. Default it will fetch data for all nodes starting from root node. Separate multiple regex with a pipe(|)")
+			.addValidator(StandardValidators.REGULAR_EXPRESSION_VALIDATOR)
 			.build();
 
 	public static final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
 			.Builder().name("Recursive Depth")
-			.description("Maximum depth from the starting node to read, Default is 0")
+			.description("Maximum depth from the starting node to read, Default is 3")
 			.required(true)
+			.defaultValue("3")
 			.addValidator(StandardValidators.INTEGER_VALIDATOR)
 			.build();
 
@@ -165,22 +167,14 @@ public class GetOPCNodeList extends AbstractProcessor {
 				return;
 			}
 
-			List<ExpandedNodeId> ids = new ArrayList<>();
-
-			// Set the starting node and parse the node tree
+			Pattern pattern;
 			if (starting_node == null) {
-				logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
-				ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-			}
-			if (starting_node != null) {
-				String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
-
-				for (String split : splits) {
-					ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
-				}
+				pattern = Pattern.compile("[^\\.].*");
+			} else {
+				pattern = Pattern.compile(starting_node);
 			}
 
-			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids, new UnsignedInteger(max_reference_per_node));
+			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, pattern, new UnsignedInteger(max_reference_per_node));
 			if (StringUtils.isNotBlank(nameSpace)) {
 				stringBuilder.append(nameSpace);
 
