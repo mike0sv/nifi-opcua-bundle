@@ -42,7 +42,7 @@ import org.opcfoundation.ua.core.Identifiers;
 
 public class GetOPCNodeList extends AbstractProcessor {
 
-	private String starting_node = null;
+	private String node_filter = null;
 	private String print_indentation = "No";
 	private String remove_opc_string = "No";
 	private Integer max_recursiveDepth;
@@ -55,9 +55,9 @@ public class GetOPCNodeList extends AbstractProcessor {
 			.identifiesControllerService(OPCUAService.class)
 			.build();
 
-	public static final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
-			.Builder().name("Starting Nodes")
-			.description("Provide regular expression for nodes you want to fetch data. Default it will fetch data for all nodes starting from root node. Separate multiple regex with a pipe(|)")
+	public static final PropertyDescriptor NODE_FILTER = new PropertyDescriptor
+			.Builder().name("Node Filter")
+			.description("Provide regular expression for nodes you want to fetch node-list. Default it will fetch node-list for all nodes starting from root node. Separate multiple regex with a pipe(|)")
 			.addValidator(StandardValidators.REGULAR_EXPRESSION_VALIDATOR)
 			.build();
 
@@ -114,7 +114,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 		final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
 		descriptors.add(OPCUA_SERVICE);
 		descriptors.add(RECURSIVE_DEPTH);
-		descriptors.add(STARTING_NODE);
+		descriptors.add(NODE_FILTER);
 		descriptors.add(PRINT_INDENTATION);
 		descriptors.add(REMOVE_OPC_STRING);
 		descriptors.add(MAX_REFERENCE_PER_NODE);
@@ -142,7 +142,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 		print_indentation = context.getProperty(PRINT_INDENTATION).getValue();
 		max_recursiveDepth = Integer.valueOf(context.getProperty(RECURSIVE_DEPTH).getValue());
-		starting_node = context.getProperty(STARTING_NODE).getValue();
+		node_filter = context.getProperty(NODE_FILTER).getValue();
 		remove_opc_string = context.getProperty(REMOVE_OPC_STRING).getValue();
 		max_reference_per_node = Integer.valueOf(context.getProperty(MAX_REFERENCE_PER_NODE).getValue());
 	}
@@ -168,10 +168,10 @@ public class GetOPCNodeList extends AbstractProcessor {
 			}
 
 			Pattern pattern;
-			if (starting_node == null) {
+			if (node_filter == null) {
 				pattern = Pattern.compile("[^\\.].*");
 			} else {
-				pattern = Pattern.compile(starting_node);
+				pattern = Pattern.compile(node_filter);
 			}
 
 			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, pattern, new UnsignedInteger(max_reference_per_node));
@@ -184,7 +184,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 				if (flowFile != null) {
 					try {
 						flowFile = session.putAttribute(flowFile, "recursiveDepth", Integer.toString(max_recursiveDepth));
-						flowFile = session.putAttribute(flowFile, "startNode", starting_node);
+						flowFile = session.putAttribute(flowFile, "nodeFilter", node_filter);
 						flowFile = session.write(flowFile, new OutputStreamCallback() {
 							public void process(OutputStream out) throws IOException {
 
