@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
@@ -41,7 +42,7 @@ import org.opcfoundation.ua.core.Identifiers;
 
 public class GetOPCNodeList extends AbstractProcessor {
 
-	private String starting_node = null;
+	private String node_filter = null;
 	private String print_indentation = "No";
 	private String remove_opc_string = "No";
 	private Integer max_recursiveDepth;
@@ -54,16 +55,17 @@ public class GetOPCNodeList extends AbstractProcessor {
 			.identifiesControllerService(OPCUAService.class)
 			.build();
 
-	public static final PropertyDescriptor STARTING_NODE = new PropertyDescriptor
-			.Builder().name("Starting Nodes")
-			.description("From what node should Nifi begin browsing the node tree. Default is the root node. Seperate multiple nodes with a comma (,)")
-			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+	public static final PropertyDescriptor NODE_FILTER = new PropertyDescriptor
+			.Builder().name("Node Filter")
+			.description("Provide regular expression for nodes you want to fetch node-list. Default it will fetch node-list for all nodes starting from root node. Separate multiple regex with a pipe(|)")
+			.addValidator(StandardValidators.REGULAR_EXPRESSION_VALIDATOR)
 			.build();
 
 	public static final PropertyDescriptor RECURSIVE_DEPTH = new PropertyDescriptor
 			.Builder().name("Recursive Depth")
-			.description("Maximum depth from the starting node to read, Default is 0")
+			.description("Maximum depth from the starting node to read, Default is 3")
 			.required(true)
+			.defaultValue("3")
 			.addValidator(StandardValidators.INTEGER_VALIDATOR)
 			.build();
 
@@ -112,7 +114,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 		final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
 		descriptors.add(OPCUA_SERVICE);
 		descriptors.add(RECURSIVE_DEPTH);
-		descriptors.add(STARTING_NODE);
+		descriptors.add(NODE_FILTER);
 		descriptors.add(PRINT_INDENTATION);
 		descriptors.add(REMOVE_OPC_STRING);
 		descriptors.add(MAX_REFERENCE_PER_NODE);
@@ -140,7 +142,7 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 		print_indentation = context.getProperty(PRINT_INDENTATION).getValue();
 		max_recursiveDepth = Integer.valueOf(context.getProperty(RECURSIVE_DEPTH).getValue());
-		starting_node = context.getProperty(STARTING_NODE).getValue();
+		node_filter = context.getProperty(NODE_FILTER).getValue();
 		remove_opc_string = context.getProperty(REMOVE_OPC_STRING).getValue();
 		max_reference_per_node = Integer.valueOf(context.getProperty(MAX_REFERENCE_PER_NODE).getValue());
 	}
@@ -165,22 +167,14 @@ public class GetOPCNodeList extends AbstractProcessor {
 				return;
 			}
 
-			List<ExpandedNodeId> ids = new ArrayList<>();
-
-			// Set the starting node and parse the node tree
-			if (starting_node == null) {
-				logger.debug("Parse the root node " + new ExpandedNodeId(Identifiers.RootFolder));
-				ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
-			}
-			if (starting_node != null) {
-				String[] splits = NodeId.parseNodeId(starting_node).toString().split(",");
-
-				for (String split : splits) {
-					ids.add(new ExpandedNodeId(NodeId.parseNodeId(split)));
-				}
+			Pattern pattern;
+			if (node_filter == null) {
+				pattern = Pattern.compile("[^\\.].*");
+			} else {
+				pattern = Pattern.compile(node_filter);
 			}
 
-			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, ids, new UnsignedInteger(max_reference_per_node));
+			String nameSpace = opcUAService.getNameSpace(print_indentation, max_recursiveDepth, pattern, new UnsignedInteger(max_reference_per_node));
 			if (StringUtils.isNotBlank(nameSpace)) {
 				stringBuilder.append(nameSpace);
 
@@ -189,6 +183,8 @@ public class GetOPCNodeList extends AbstractProcessor {
 
 				if (flowFile != null) {
 					try {
+						flowFile = session.putAttribute(flowFile, "recursiveDepth", Integer.toString(max_recursiveDepth));
+						flowFile = session.putAttribute(flowFile, "nodeFilter", node_filter);
 						flowFile = session.write(flowFile, new OutputStreamCallback() {
 							public void process(OutputStream out) throws IOException {
 

@@ -46,6 +46,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.opcfoundation.ua.utils.EndpointUtil.selectBySecurityPolicy;
 
@@ -110,6 +112,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     private String userName = null;
     private String password = null;
     private String authType = null;
+    private Pattern pattern = null;
 
     static {
         final List<PropertyDescriptor> props = new ArrayList<>();
@@ -198,18 +201,20 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         // Situation 2: There are results descriptions and each node must be parsed
         for (int k = 0; k < referenceDesc.length; k++) {
 
-            // Print indentation
-            switch (print_indentation) {
+            // Print the current node
+            Matcher matcher = pattern.matcher(referenceDesc[k].getNodeId().toString());
+            if (matcher.find()) {
+                // Print indentation
+                switch (print_indentation) {
 
-                case "Yes": {
-                    for (int j = 0; j < recursiveDepth; j++) {
-                        stringBuilder.append("- ");
+                    case "Yes": {
+                        for (int j = 0; j < recursiveDepth; j++) {
+                            stringBuilder.append("- ");
+                        }
                     }
                 }
+                stringBuilder.append(referenceDesc[k].getNodeId() + System.lineSeparator());
             }
-
-            // Print the current node
-            stringBuilder.append(referenceDesc[k].getNodeId() + System.lineSeparator());
 
             // Print the child node(s)
             String str = parseNodeTree(print_indentation, recursiveDepth + 1, max_recursiveDepth, referenceDesc[k].getNodeId(), max_reference_per_node, logger);
@@ -523,17 +528,14 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
     @Override
-    public String getNameSpace(String print_indentation, int max_recursiveDepth, List<ExpandedNodeId> expandedNodeIds, UnsignedInteger max_reference_per_node) throws ProcessException {
+    public String getNameSpace(String print_indentation, int max_recursiveDepth, Pattern pattern, UnsignedInteger max_reference_per_node) throws ProcessException {
 
         final ComponentLog logger = getLogger();
         StringBuilder stringBuilder = new StringBuilder();
+        ExpandedNodeId expandedNodeId = new ExpandedNodeId((Identifiers.RootFolder));
+        this.pattern = pattern;
 
-        for (ExpandedNodeId expNodeId : expandedNodeIds) {
-            // Set the starting node and parse the node tree
-            logger.debug("Parse the result list for node " + expNodeId.toString());
-            stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expNodeId, max_reference_per_node, logger));
-        }
-
+        stringBuilder.append(parseNodeTree(print_indentation, 0, max_recursiveDepth, expandedNodeId, max_reference_per_node, logger));
         return stringBuilder.toString();
 
     }
