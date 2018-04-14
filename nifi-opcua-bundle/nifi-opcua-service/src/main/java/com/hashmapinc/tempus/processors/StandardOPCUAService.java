@@ -16,6 +16,10 @@
  */
 package com.hashmapinc.tempus.processors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnDisabled;
@@ -33,6 +37,7 @@ import org.json.JSONObject;
 import org.opcfoundation.ua.application.Client;
 import org.opcfoundation.ua.application.SessionChannel;
 import org.opcfoundation.ua.builtintypes.*;
+import org.opcfoundation.ua.builtintypes.DataValue;
 import org.opcfoundation.ua.common.ServiceResultException;
 import org.opcfoundation.ua.core.*;
 import org.opcfoundation.ua.transport.security.Cert;
@@ -474,7 +479,7 @@ public class StandardOPCUAService extends AbstractControllerService implements O
     }
 
     @Override
-    public byte[] getValue(List<String> reqTagnames, String returnTimestamp, String excludeNullValue, String nullValueString, String dataFormat, boolean longTimestamp) throws ProcessException {
+    public byte[] getValue(List<String> reqTagnames, String returnTimestamp, String excludeNullValue, String nullValueString, String dataFormat, boolean longTimestamp, String deviceType, String deviceName) throws ProcessException {
         final ComponentLog logger = getLogger();
 
         //Create the nodes to read array
@@ -500,7 +505,9 @@ public class StandardOPCUAService extends AbstractControllerService implements O
         // Submit OPC Read and handle response
         try {
             ReadResponse readResponse = currentSession.Read(req);
-            DataValue[] values = readResponse.getResults();
+
+            org.opcfoundation.ua.builtintypes.DataValue[] values;
+            values = readResponse.getResults();
 
             // Validate response
             if (values != null) {
@@ -515,6 +522,10 @@ public class StandardOPCUAService extends AbstractControllerService implements O
                             break;
                         case "JSON" :
                             serverResponse = getDataInJSON(nodesToRead, values, returnTimestamp, excludeNullValue, nullValueString, longTimestamp);
+                            break;
+                        case "TEMPUS" :
+                            boolean isGateway = deviceType.equals("Gateway");
+                            serverResponse = getDataInTempus(nodesToRead, values, returnTimestamp, excludeNullValue, nullValueString, longTimestamp, isGateway, deviceName);
                             break;
                     }
                 }
@@ -614,6 +625,102 @@ public class StandardOPCUAService extends AbstractControllerService implements O
 
         return finalJsonObject.toString();
     }
+
+    private String getDataInTempus(ReadValueId nodesToRead[], DataValue values[], String returnTimestamp, String excludeNullValue,
+                                   String nullValueString, boolean longTimestamp, boolean isGateway, String deviceName) {
+
+        String returnValue = "";
+        String ts;
+        String name;
+        Object value;
+        Object quality;
+        com.hashmapinc.tempus.processors.DataValue dataValue = null;
+        ArrayList<com.hashmapinc.tempus.processors.DataValue> dataValueList = new ArrayList<>();
+        String newTimeStamp = "";
+
+        for (int i = 0; i < values.length; i++) {
+
+            try {
+                // Add JSON Object for sensor values
+                if (excludeNullValue.equals("true") && values[i].getValue().toString().equals(nullValueString)) {
+                    getLogger().debug("Null value returned for " + values[i].getValue().toString() + " -- Skipping because property is set");
+                    continue;
+                }
+
+                ts = getTimeStamp(values[i], returnTimestamp, longTimestamp); //timestamp
+
+                if (ts == null){
+                    continue;
+                }
+
+                // handle multiple timestamps
+                if (! newTimeStamp.equalsIgnoreCase(ts) )
+                {
+                    newTimeStamp = ts;
+                    dataValue = new com.hashmapinc.tempus.processors.DataValue();
+                    dataValue.setTimeStamp(newTimeStamp);
+                    dataValueList.add(dataValue);
+                }
+
+                // get name, value and quality
+                String[] key = nodesToRead[i].getNodeId().toString().split("=");
+                name =  key[key.length - 1].toString();
+                value = values[i].getValue().getValue();
+
+                if (value == null){
+                    continue;
+                }
+                quality = values[i].getStatusCode().getValue();
+                dataValue.addValue(name,value);
+                dataValue.addValue(name+"-quality",quality);
+            } catch (Exception ex) {
+                getLogger().error("Error parsing result for" + nodesToRead[i].getNodeId().toString());
+            }
+        }
+
+        try {
+
+            if (isGateway) {
+
+                GatewayValue gwValue = new GatewayValue();
+                gwValue.setDeviceName(deviceName);
+
+                for (int i = 0; i < dataValueList.size(); i++) {
+                    gwValue.addDataValue(dataValueList.get(i));
+                }
+
+                ObjectMapper gwMapper = new ObjectMapper();
+                SimpleModule module = new SimpleModule();
+                module.addSerializer(GatewayValue.class, new GatewayValueSerializer());
+                gwMapper.registerModule(module);
+
+                returnValue = gwMapper.writeValueAsString(gwValue);
+            } else {
+
+                DeviceValue deviceValue = new DeviceValue();
+
+                for (int i = 0; i < dataValueList.size(); i++) {
+                    deviceValue.addDataValue(dataValueList.get(i));
+                }
+
+                ObjectMapper dMapper = new ObjectMapper();
+                SimpleModule module = new SimpleModule();
+                module.addSerializer(DeviceValue.class, new DeviceValueSerializer());
+                dMapper.registerModule(module);
+
+                returnValue = dMapper.writeValueAsString(deviceValue);
+            }
+
+        } catch (JsonProcessingException e) {
+            getLogger().error("Error generating Tempus JSON: " + e.getMessage());
+        }
+
+        return returnValue;
+
+    }
+
+
+
 
     /*private Object getTimeStamp(DataValue value, String returnTimestamp, boolean longTimestamp) throws Exception{
         Object ts = null;

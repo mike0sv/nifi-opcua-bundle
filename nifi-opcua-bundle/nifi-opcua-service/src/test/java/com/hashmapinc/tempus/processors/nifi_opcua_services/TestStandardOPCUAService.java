@@ -16,8 +16,8 @@
  */
 package com.hashmapinc.tempus.processors.nifi_opcua_services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashmap.tempus.opc.test.server.TestServer;
-import com.hashmapinc.tempus.processors.OPCUAService;
 import com.hashmapinc.tempus.processors.StandardOPCUAService;
 import org.apache.nifi.reporting.InitializationException;
 import org.apache.nifi.util.TestRunner;
@@ -29,11 +29,7 @@ import org.opcfoundation.ua.builtintypes.ExpandedNodeId;
 import org.opcfoundation.ua.builtintypes.UnsignedInteger;
 import org.opcfoundation.ua.core.Identifiers;
 import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class TestStandardOPCUAService {
@@ -43,7 +39,7 @@ public class TestStandardOPCUAService {
     @Before
     public void init() {
         try {
-            server = new TestServer(45678, "user", "test");
+            server = new TestServer(45678);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,6 +99,7 @@ public class TestStandardOPCUAService {
         runner.setProperty(service, StandardOPCUAService.USERNAME, "user");
         runner.setProperty(service, StandardOPCUAService.PASSWORD, "password1");
         runner.enableControllerService(service);
+
         List<ExpandedNodeId> ids = new ArrayList<>();
         ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
         Pattern pattern = Pattern.compile("[^\\.].*");
@@ -114,6 +111,100 @@ public class TestStandardOPCUAService {
 
         assertNotNull(result);
         assertNotEquals(result.length(), 0);
+    }
+
+
+    @Test
+    public void testGetDataTempusDeviceInsecure() throws InitializationException {
+
+        final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
+        final StandardOPCUAService service = new StandardOPCUAService();
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        runner.addControllerService("hi", service);
+
+        runner.setProperty(service, StandardOPCUAService.APPLICATION_NAME, "nifi");
+        runner.setProperty(service, StandardOPCUAService.ENDPOINT, "opc.tcp://127.0.0.1:45678/test");
+        runner.setProperty(service, StandardOPCUAService.SECURITY_POLICY, "NONE");
+        runner.setProperty(service, StandardOPCUAService.AUTH_POLICY, "Anon");
+
+        runner.enableControllerService(service);
+        List<ExpandedNodeId> ids = new ArrayList<>();
+        ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
+        Pattern pattern = Pattern.compile("ns=1;s=VendorServerInfo");
+        stringBuilder.append(service.getNameSpace("No", 3, pattern, new UnsignedInteger(1000)));
+
+
+        String result = stringBuilder.toString();
+        assertNotNull(result);
+        String [] tagNames = result.split("\n");
+        List<String> tagList = Arrays.asList(tagNames);
+
+        assertNotEquals(tagList.size(), 0);
+
+        byte[] tempusJSON = service.getValue( tagList , "SourceTimestamp", "false",
+                                                "", "TEMPUS", true,
+                                                "Device", "");
+
+        String jsonValues = new String(tempusJSON);
+        assertNotNull(tempusJSON);
+
+
+        runner.assertValid();
+        try {
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.readTree(jsonValues);
+
+        } catch (Exception ex) {  fail(ex.getMessage()); }
+
+    }
+
+
+    @Test
+    public void testGetDataTempusGatewayInsecure() throws InitializationException {
+
+        final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
+        final StandardOPCUAService service = new StandardOPCUAService();
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        runner.addControllerService("hi", service);
+
+        runner.setProperty(service, StandardOPCUAService.APPLICATION_NAME, "nifi");
+        runner.setProperty(service, StandardOPCUAService.ENDPOINT, "opc.tcp://127.0.0.1:45678/test");
+        runner.setProperty(service, StandardOPCUAService.SECURITY_POLICY, "NONE");
+        runner.setProperty(service, StandardOPCUAService.AUTH_POLICY, "Anon");
+
+        runner.enableControllerService(service);
+        List<ExpandedNodeId> ids = new ArrayList<>();
+        ids.add(new ExpandedNodeId((Identifiers.RootFolder)));
+        Pattern pattern = Pattern.compile("ns=1;s=VendorServerInfo");
+        stringBuilder.append(service.getNameSpace("No", 3, pattern, new UnsignedInteger(1000)));
+
+        String result = stringBuilder.toString();
+        assertNotNull(result);
+        String [] tagNames = result.split("\n");
+        List<String> tagList = Arrays.asList(tagNames);
+
+        assertNotEquals(tagList.size(), 0);
+
+        byte[] tempusJSON = service.getValue( tagList , "SourceTimestamp", "false",
+                "", "TEMPUS", true,
+                "Gateway", "Server 123");
+
+        String jsonValues = new String(tempusJSON);
+        assertNotNull(tempusJSON);
+
+        try {
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.readTree(jsonValues);
+
+        } catch (Exception ex) {  fail(ex.getMessage()); }
+
+        runner.assertValid();
     }
 
     /*@Test
