@@ -43,6 +43,10 @@ Clone the OPC Foundation GitHub repository
 Change directory into the UA-Java directory
 
     cd UA-Java
+
+Checkout the 1.3.343 release of the build by executing
+
+    git checkout 549bb94
     
 Execute the package phase (NOTE: at the time of this writing, there were test failures due to invalid tests, there are currently PR's
 out there to address these, but they have not been merged into master, therefore we need to skip tests)
