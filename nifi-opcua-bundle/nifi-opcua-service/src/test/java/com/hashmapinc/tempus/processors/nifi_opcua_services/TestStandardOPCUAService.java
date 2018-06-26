@@ -39,7 +39,7 @@ public class TestStandardOPCUAService {
     @Before
     public void init() {
         try {
-            server = new TestServer(45678);
+            server = new TestServer(45678, "user", "test");
         } catch (Exception e) {
             e.printStackTrace();
         }
