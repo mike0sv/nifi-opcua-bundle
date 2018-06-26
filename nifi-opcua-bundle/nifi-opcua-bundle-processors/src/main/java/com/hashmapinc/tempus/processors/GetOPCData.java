@@ -64,6 +64,16 @@ public class GetOPCData extends AbstractProcessor {
 			  .required(true)
 			  .identifiesControllerService(OPCUAService.class)
 			  .build();
+
+    public static final PropertyDescriptor TEMPUS_DEVICE_TYPE = new PropertyDescriptor
+            .Builder().name("TEMPUS_DEVICE_TYPE")
+            .displayName("Tempus Device Type")
+            .description("When TEMPUS is selected, whether the processor should output the data in the Gateway message format or the device message format. If Gateway, Tempus Device Name is required.")
+            .required(false)
+            .allowableValues("Gateway", "Device")
+            .defaultValue("Device")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
     
 	public static final PropertyDescriptor RETURN_TIMESTAMP = new PropertyDescriptor
             .Builder().name("Return Timestamp")
@@ -85,10 +95,10 @@ public class GetOPCData extends AbstractProcessor {
     public static final PropertyDescriptor DATA_FORMAT = new PropertyDescriptor
             .Builder().name("DATA_FORMAT")
             .displayName("Data Format")
-            .description("The format the data should be in, either CSV or JSON")
+            .description("The format the data should be in, either TEMPUS, CSV or JSON")
             .required(true)
-            .allowableValues("JSON","CSV")
-            .defaultValue("JSON")
+            .allowableValues("TEMPUS","JSON","CSV")
+            .defaultValue("TEMPUS")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
@@ -105,6 +115,14 @@ public class GetOPCData extends AbstractProcessor {
     public static final PropertyDescriptor NULL_VALUE_STRING = new PropertyDescriptor
             .Builder().name("Null Value String")
             .description("If removing null values, what string is used for null")
+            .required(false)
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+
+    public static final PropertyDescriptor TEMPUS_DEVICE_NAME = new PropertyDescriptor
+            .Builder().name("TEMPUS_DEVICE_NAME")
+            .displayName("Tempus Device Name")
+            .description("In Gateway mode, the name of the device that will be used as the identity.")
             .required(false)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
@@ -132,6 +150,8 @@ public class GetOPCData extends AbstractProcessor {
         descriptors.add(NULL_VALUE_STRING);
         descriptors.add(DATA_FORMAT);
         descriptors.add(LONG_TIMESTAMP);
+        descriptors.add(TEMPUS_DEVICE_TYPE);
+        descriptors.add(TEMPUS_DEVICE_NAME);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
@@ -215,10 +235,15 @@ public class GetOPCData extends AbstractProcessor {
         	return;  //flow should return here if the session cannot be updated
         }
 
-        byte[] values = opcUAService.getValue(requestedTagnames.get(),timestamp.get(),excludeNullValue.get(),nullValueString.get(), context.getProperty(DATA_FORMAT).getValue(), context.getProperty(LONG_TIMESTAMP).asBoolean());
+        byte[] values = opcUAService.getValue(requestedTagnames.get(),
+                timestamp.get(),excludeNullValue.get(),nullValueString.get(),
+                context.getProperty(DATA_FORMAT).getValue(),
+                context.getProperty(LONG_TIMESTAMP).asBoolean(),
+                context.getProperty(TEMPUS_DEVICE_TYPE).getValue(),
+                context.getProperty(TEMPUS_DEVICE_NAME).getValue());
 
         // Updating content-type if Data format is JSON
-        if (context.getProperty(DATA_FORMAT).getValue().toString().equals("JSON")) {
+        if ((context.getProperty(DATA_FORMAT).getValue().toString().equals("JSON") || (context.getProperty(DATA_FORMAT).getValue().toString().equals("TEMPUS") ))){
             session.putAttribute(flowFile, "mime.type", "application/json");
         }
         
