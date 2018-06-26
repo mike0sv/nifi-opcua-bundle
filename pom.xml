@@ -33,7 +33,7 @@
     </parent>
     <properties>
         <jdk.version>1.8</jdk.version>
-        <opc-ua-stack.version>1.3.344-SNAPSHOT</opc-ua-stack.version>
+        <opc-ua-stack.version>1.3.343</opc-ua-stack.version>
     </properties>
 
     <modules>

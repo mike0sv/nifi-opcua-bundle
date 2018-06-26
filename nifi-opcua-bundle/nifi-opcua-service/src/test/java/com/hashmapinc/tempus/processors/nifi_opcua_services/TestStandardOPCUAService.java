@@ -97,7 +97,7 @@ public class TestStandardOPCUAService {
         runner.setProperty(service, StandardOPCUAService.SECURITY_POLICY, "NONE");
         runner.setProperty(service, StandardOPCUAService.AUTH_POLICY, "Username");
         runner.setProperty(service, StandardOPCUAService.USERNAME, "user");
-        runner.setProperty(service, StandardOPCUAService.PASSWORD, "password1");
+        runner.setProperty(service, StandardOPCUAService.PASSWORD, "test");
         runner.enableControllerService(service);
 
         List<ExpandedNodeId> ids = new ArrayList<>();
