@@ -38,7 +38,7 @@ This processor aims to provide a few key features:
 
 Clone the OPC Foundation GitHub repository
 
-    https://github.com/OPCFoundation/UA-Java.git
+    git clone https://github.com/OPCFoundation/UA-Java.git
 
 Change directory into the UA-Java directory
 
