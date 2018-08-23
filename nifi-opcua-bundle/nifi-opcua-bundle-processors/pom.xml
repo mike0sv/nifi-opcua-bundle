@@ -41,8 +41,7 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -50,9 +49,37 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>com.hashmapinc.tempus.processors</groupId>
-        	<artifactId>nifi-opcua-service</artifactId>
-        	<version>0.0.1-SNAPSHOT</version>
+            <groupId>com.hashmapinc.tempus.processors</groupId>
+            <artifactId>nifi-opcua-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <!--<exclusion>  &lt;!&ndash; declare the exclusion here &ndash;&gt;-->
+                    <!--<groupId>com.hashmapinc.tempus</groupId>-->
+                    <!--<artifactId>embedded-opcua-server</artifactId>-->
+                <!--</exclusion>-->
+
+                <exclusion>
+                    <groupId>org.eclipse.milo</groupId>
+                    <artifactId>sdk-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.milo</groupId>
+                    <artifactId>stack-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>sdk-client</artifactId>
+            <version>0.1.5</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>stack-client</artifactId>
+            <version>0.1.5</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 </project>
